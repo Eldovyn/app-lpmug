@@ -293,12 +293,27 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
               <?= esc($t['grafik_ketua_anggota']) ?>
             </h5>
             <div class="dash-chart-actions">
-              <select id="selectProdi" class="dash-select" aria-label="Filter Prodi">
+              <!-- Hidden native select —  accessed by JS buildPayload -->
+              <select id="selectProdi" style="display:none;" aria-hidden="true">
                 <option value=""><?= esc($t['semua_prodi']) ?></option>
                 <?php foreach ($dataPerProdi as $item): ?>
                   <option value="<?= esc($item['jurusan_id']) ?>"><?= esc($item['jurusan_name']) ?></option>
                 <?php endforeach; ?>
               </select>
+              <!-- Custom searchable dropdown -->
+              <div class="dash-cs-wrapper" id="csWrapperProdi">
+                <div class="dash-cs-trigger" id="csTriggerProdi" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+                  <span class="dash-cs-trigger-text" id="csTriggerTextProdi"><?= esc($t['semua_prodi']) ?></span>
+                  <svg class="dash-cs-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="dash-cs-dropdown" id="csDropdownProdi" role="listbox">
+                  <div class="dash-cs-search-box">
+                    <input type="text" class="dash-cs-search-input" id="csSearchProdi" placeholder="Cari prodi..." autocomplete="off" aria-label="Cari program studi">
+                  </div>
+                  <div class="dash-cs-list" id="csListProdi"></div>
+                  <div class="dash-cs-no-results" id="csNoProdi">Tidak ada hasil</div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="dash-chart-body" style="height:280px;">
@@ -316,12 +331,27 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
               <?= esc($t['grafik_luaran']) ?>
             </h5>
             <div class="dash-chart-actions">
-              <select id="selectJurusanLuaran" class="dash-select" aria-label="Filter Jurusan Luaran">
+              <!-- Hidden native select -->
+              <select id="selectJurusanLuaran" style="display:none;" aria-hidden="true">
                 <option value=""><?= esc($t['semua_prodi']) ?></option>
                 <?php foreach ($dataPerProdi as $item): ?>
                   <option value="<?= esc($item['jurusan_id']) ?>"><?= esc($item['jurusan_name']) ?></option>
                 <?php endforeach; ?>
               </select>
+              <!-- Custom searchable dropdown -->
+              <div class="dash-cs-wrapper" id="csWrapperLuaran">
+                <div class="dash-cs-trigger" id="csTriggerLuaran" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">
+                  <span class="dash-cs-trigger-text" id="csTriggerTextLuaran"><?= esc($t['semua_prodi']) ?></span>
+                  <svg class="dash-cs-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="dash-cs-dropdown" id="csDropdownLuaran" role="listbox">
+                  <div class="dash-cs-search-box">
+                    <input type="text" class="dash-cs-search-input" id="csSearchLuaran" placeholder="Cari prodi..." autocomplete="off" aria-label="Cari program studi luaran">
+                  </div>
+                  <div class="dash-cs-list" id="csListLuaran"></div>
+                  <div class="dash-cs-no-results" id="csNoLuaran">Tidak ada hasil</div>
+                </div>
+              </div>
               <a href="#" class="dash-btn-icon" id="dl-luaran" title="<?= esc($t['download_chart']) ?>"><i class="fas fa-download"></i></a>
             </div>
           </div>
@@ -552,10 +582,99 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
     });
   })();
 
+  // ===== HELPER: custom searchable select =====
+  /**
+   * makeDashSelect — lightweight searchable dropdown
+   * @param {string} wrapperId  - id of .dash-cs-wrapper
+   * @param {string} triggerId  - id of .dash-cs-trigger
+   * @param {string} triggerTextId - id of the <span> showing current text
+   * @param {string} dropdownId - id of .dash-cs-dropdown
+   * @param {string} searchId   - id of search <input>
+   * @param {string} listId     - id of .dash-cs-list
+   * @param {string} noResultId - id of .dash-cs-no-results
+   * @param {string} nativeId   - id of hidden <select>
+   * @param {Function} onSelect - callback(value, text) when item selected
+   */
+  function makeDashSelect(wrapperId, triggerId, triggerTextId, dropdownId, searchId, listId, noResultId, nativeId, onSelect) {
+    const wrapper     = document.getElementById(wrapperId);
+    const trigger     = document.getElementById(triggerId);
+    const triggerText = document.getElementById(triggerTextId);
+    const dropdown    = document.getElementById(dropdownId);
+    const searchInput = document.getElementById(searchId);
+    const list        = document.getElementById(listId);
+    const noResult    = document.getElementById(noResultId);
+    const native      = document.getElementById(nativeId);
+    if (!wrapper || !native) return;
+
+    const options = Array.from(native.options);
+    let activeValue = native.value;
+
+    function buildList(filter) {
+      filter = (filter || '').toLowerCase().trim();
+      list.innerHTML = '';
+      let count = 0;
+      options.forEach(function(opt) {
+        if (filter && !opt.text.toLowerCase().includes(filter)) return;
+        const item = document.createElement('div');
+        item.className = 'dash-cs-item' + (opt.value === activeValue ? ' active' : '');
+        item.textContent = opt.text;
+        item.dataset.value = opt.value;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', opt.value === activeValue ? 'true' : 'false');
+        item.addEventListener('click', function() {
+          activeValue = opt.value;
+          triggerText.textContent = opt.text;
+          native.value = opt.value;
+          closeDropdown();
+          if (onSelect) onSelect(opt.value, opt.text);
+        });
+        list.appendChild(item);
+        count++;
+      });
+      noResult.style.display = count === 0 ? 'block' : 'none';
+    }
+
+    function openDropdown() {
+      trigger.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+      dropdown.classList.add('open');
+      searchInput.value = '';
+      buildList('');
+      searchInput.focus();
+    }
+
+    function closeDropdown() {
+      trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      dropdown.classList.remove('open');
+    }
+
+    // Init displayed text
+    const initOpt = options.find(o => o.value === native.value);
+    if (initOpt) triggerText.textContent = initOpt.text;
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
+    });
+    trigger.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dropdown.classList.contains('open') ? closeDropdown() : openDropdown(); }
+      if (e.key === 'Escape') closeDropdown();
+    });
+    searchInput.addEventListener('input', function() { buildList(this.value); });
+    searchInput.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    document.addEventListener('click', function(e) {
+      if (!wrapper.contains(e.target)) closeDropdown();
+    });
+
+    buildList('');
+    return { closeDropdown, openDropdown };
+  }
+
   // ===== CHART 3: KETUA & ANGGOTA BAR =====
   (function() {
     const ctx    = document.getElementById('chartProdi');
-    const selEl  = document.getElementById('selectProdi');
     if (!ctx) return;
 
     const dataPerProdi    = <?= json_encode($dataPerProdi) ?>;
@@ -596,7 +715,7 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
           labels,
           datasets: [
             { label: I18N.jumlah_ketua,   data: ketua,   backgroundColor: COLORS.indigo, borderRadius: 6, borderSkipped: false },
-            { label: I18N.jumlah_anggota, data: anggota, backgroundColor: COLORS.cyan, borderRadius: 6, borderSkipped: false },
+            { label: I18N.jumlah_anggota, data: anggota, backgroundColor: COLORS.cyan,   borderRadius: 6, borderSkipped: false },
           ]
         },
         options: {
@@ -619,14 +738,18 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
       });
     }
 
-    renderChart(selEl?.value || '');
-    selEl?.addEventListener('change', () => renderChart(selEl.value));
+    renderChart('');
+    makeDashSelect(
+      'csWrapperProdi', 'csTriggerProdi', 'csTriggerTextProdi',
+      'csDropdownProdi', 'csSearchProdi', 'csListProdi', 'csNoProdi',
+      'selectProdi',
+      function(value) { renderChart(value); }
+    );
   })();
 
   // ===== CHART 4: LUARAN BAR =====
   (function() {
     const ctx   = document.getElementById('luaranChart');
-    const selEl = document.getElementById('selectJurusanLuaran');
     if (!ctx) return;
 
     const chartData      = <?= json_encode($chartData ?? []) ?>;
@@ -696,8 +819,13 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
       });
     }
 
-    renderChart(selEl?.value || '');
-    selEl?.addEventListener('change', () => renderChart(selEl.value));
+    renderChart('');
+    makeDashSelect(
+      'csWrapperLuaran', 'csTriggerLuaran', 'csTriggerTextLuaran',
+      'csDropdownLuaran', 'csSearchLuaran', 'csListLuaran', 'csNoLuaran',
+      'selectJurusanLuaran',
+      function(value) { renderChart(value); }
+    );
 
     // Download button
     document.getElementById('dl-luaran')?.addEventListener('click', (e) => {

@@ -191,8 +191,196 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
     }
 
     .filter-semester {
-        border-radius: 5px;
-        margin-bottom: 20px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+    }
+
+    /* ===== Modern Score Table ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    .rekap-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 24px rgba(99,102,241,.08), 0 1px 4px rgba(0,0,0,.05);
+        overflow: hidden;
+        font-family: 'Inter', -apple-system, sans-serif;
+        margin-top: 8px;
+    }
+    .rekap-card-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .rekap-card-header-title {
+        color: #fff;
+        font-size: .9rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .rekap-card-header-title .dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.6);
+        animation: pulse-dot 2s ease infinite;
+        flex-shrink: 0;
+    }
+    .rekap-row-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+    .rekap-row-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .15s;
+    }
+    .rekap-row-item:last-child {
+        border-bottom: none;
+    }
+    .rekap-row-item:hover {
+        background: #f8faff;
+    }
+    .rekap-row-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #eef2ff, #ede9fe);
+        color: #6366f1;
+        font-size: .72rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .rekap-row-body {
+        flex: 1;
+        min-width: 0;
+    }
+    .rekap-row-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 6px;
+        line-height: 1.4;
+    }
+    .rekap-progress-track {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+    .rekap-progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        width: 0%;
+        transition: width 1s cubic-bezier(.4,0,.2,1);
+    }
+    .rekap-row-score {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: -.02em;
+        flex-shrink: 0;
+        min-width: 40px;
+        text-align: right;
+        font-family: 'Inter', sans-serif;
+    }
+    /* Overall row */
+    .rekap-overall {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 24px;
+        background: linear-gradient(135deg, rgba(99,102,241,.06) 0%, rgba(139,92,246,.06) 100%);
+        border-top: 2px solid rgba(99,102,241,.12);
+    }
+    .rekap-overall-label {
+        font-size: .9rem;
+        font-weight: 700;
+        color: #6366f1;
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .rekap-overall-score {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #6366f1;
+        letter-spacing: -.04em;
+        font-family: 'Inter', sans-serif;
+        line-height: 1;
+    }
+    .rekap-overall-max {
+        font-size: .75rem;
+        color: #94a3b8;
+        font-weight: 500;
+        margin-top: 2px;
+        text-align: right;
+    }
+    /* Download buttons */
+    .rekap-actions {
+        display: flex;
+        gap: 10px;
+        padding: 20px 24px 0;
+        flex-wrap: wrap;
+    }
+    .rekap-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        border-radius: 10px;
+        font-size: .82rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        border: none;
+        cursor: pointer;
+        transition: all .2s cubic-bezier(.4,0,.2,1);
+        text-decoration: none;
+        letter-spacing: .01em;
+    }
+    .rekap-btn-excel {
+        background: linear-gradient(135deg, #10b981, #06b6d4);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16,185,129,.3);
+    }
+    .rekap-btn-excel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16,185,129,.4);
+        color: #fff;
+    }
+    .rekap-btn-pdf {
+        background: linear-gradient(135deg, #f43f5e, #f97316);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(244,63,94,.3);
+    }
+    .rekap-btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(244,63,94,.4);
+        color: #fff;
+    }
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: .5; transform: scale(1.35); }
+    }
+    @media (max-width: 575px) {
+        .rekap-row-item { padding: 14px 16px; gap: 10px; }
+        .rekap-overall  { padding: 16px; }
+        .rekap-actions  { padding: 16px 16px 0; }
+        .rekap-overall-score { font-size: 1.6rem; }
     }
 
     /* Custom Searchable Select */
@@ -367,55 +555,67 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
                             <input type="hidden" name="_method" value="PATCH">
                             <input type="hidden" name="semester" value="<?= $selected_semester ?>">
 
-                            <!-- Tabel Rata-rata -->
-                            <div class="mt-4">
-                                <table class="table table-bordered" style="border:1px solid;">
-                                    <thead>
-                                        <tr class="text-center">
-                                            <th style="border:1px solid; width:70%;">
-                                                <?= t('avg_title_component') ?>
-                                            </th>
-                                            <th style="border:1px solid; width:30%;">
-                                                <?= t('avg_title_total') ?>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td style="border:1px solid;"><?= t('sec1_a') ?></td>
-                                            <td class="text-center" style="border:1px solid;"><?= $avgA ?></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border:1px solid;"><?= t('sec1_b') ?></td>
-                                            <td class="text-center" style="border:1px solid;"><?= $avgB ?></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border:1px solid;"><?= t('sec2_title') ?></td>
-                                            <td class="text-center" style="border:1px solid;"><?= $avgC ?></td>
-                                        </tr>
-                                        <tr class="font-weight-bold bg-light">
-                                            <td style="border:1px solid;">
-                                                <?= t('avg_overall') ?>
-                                            </td>
-                                            <td class="text-center" style="border:1px solid;">
-                                                <?= $avgAll ?>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Tabel Rata-rata (Modern) -->
+                            <div class="rekap-card">
+                                <!-- Card Header -->
+                                <div class="rekap-card-header">
+                                    <div class="rekap-card-header-title">
+                                        <span class="dot"></span>
+                                        <?= t('avg_title_component') ?>
+                                    </div>
+                                    <span style="background:rgba(255,255,255,.18);color:#fff;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.06em;">
+                                        <?= t('avg_title_total') ?>
+                                    </span>
+                                </div>
+
+                                <!-- Component Rows -->
+                                <?php
+                                $rows = [
+                                    ['label' => t('sec1_a'), 'value' => $avgA,  'color' => 'linear-gradient(90deg,#6366f1,#8b5cf6)', 'num' => 'A'],
+                                    ['label' => t('sec1_b'), 'value' => $avgB,  'color' => 'linear-gradient(90deg,#06b6d4,#6366f1)', 'num' => 'B'],
+                                    ['label' => t('sec2_title'), 'value' => $avgC, 'color' => 'linear-gradient(90deg,#10b981,#06b6d4)', 'num' => 'C'],
+                                ];
+                                $maxScore = 100;
+                                ?>
+                                <ul class="rekap-row-list">
+                                    <?php foreach ($rows as $row): ?>
+                                    <li class="rekap-row-item">
+                                        <div class="rekap-row-num"><?= $row['num'] ?></div>
+                                        <div class="rekap-row-body">
+                                            <div class="rekap-row-label"><?= $row['label'] ?></div>
+                                            <div class="rekap-progress-track">
+                                                <div class="rekap-progress-fill"
+                                                     style="background:<?= $row['color'] ?>;"
+                                                     data-target="<?= $maxScore > 0 ? round(($row['value'] / $maxScore) * 100, 1) : 0 ?>"
+                                                ></div>
+                                            </div>
+                                        </div>
+                                        <div class="rekap-row-score"><?= $row['value'] ?></div>
+                                    </li>
+                                    <?php endforeach; ?>
+                                </ul>
+
+                                <!-- Overall Average -->
+                                <div class="rekap-overall">
+                                    <div class="rekap-overall-label">
+                                        <i class="fas fa-chart-line"></i>
+                                        <?= t('avg_overall') ?>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div class="rekap-overall-score"><?= $avgAll ?></div>
+                                        <div class="rekap-overall-max">/ <?= $maxScore ?></div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Tombol -->
-                            <div class="mt-3">
-                                <div class="float-left">
-                                    <button type="button" class="btn btn-success" id="downloadExcel">
-                                        <i class="fas fa-file-excel"></i> Download Excel
-                                    </button>
-                                    <button type="button" class="btn btn-info" id="downloadPDF">
-                                        <i class="fas fa-file-pdf"></i> Download PDF
-                                    </button>
-                                </div>
-                                <div class="clearfix"></div>
+                            <!-- Tombol Download -->
+                            <div class="rekap-actions mb-2">
+                                <button type="button" class="rekap-btn rekap-btn-excel" id="downloadExcel">
+                                    <i class="fas fa-file-excel"></i> Download Excel
+                                </button>
+                                <button type="button" class="rekap-btn rekap-btn-pdf" id="downloadPDF">
+                                    <i class="fas fa-file-pdf"></i> Download PDF
+                                </button>
                             </div>
 
                         </form>
@@ -469,6 +669,21 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
 
 <script>
     (function() {
+        // ===== Progress Bar Animation =====
+        (function() {
+            const fills = document.querySelectorAll('.rekap-progress-fill');
+            if (!fills.length) return;
+            const obs = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) {
+                        e.target.style.width = (e.target.dataset.target || 0) + '%';
+                        obs.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.3 });
+            fills.forEach(function(el) { obs.observe(el); });
+        })();
+
         // ===== Custom Searchable Select =====
         (function() {
             const nativeSelect  = document.getElementById('semesterFilter');
