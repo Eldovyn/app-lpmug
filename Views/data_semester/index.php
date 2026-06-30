@@ -194,6 +194,111 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
         border-radius: 5px;
         margin-bottom: 20px;
     }
+
+    /* Custom Searchable Select */
+    .cs-wrapper {
+        position: relative;
+        user-select: none;
+    }
+    .cs-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 4px;
+        display: block;
+        color: #495057;
+    }
+    .cs-selected {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: #495057;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cs-selected:hover {
+        border-color: #6777ef;
+    }
+    .cs-selected.open {
+        border-color: #6777ef;
+        box-shadow: 0 0 0 0.2rem rgba(103,119,239,0.2);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .cs-selected .cs-arrow {
+        font-size: 10px;
+        color: #adb5bd;
+        transition: transform 0.2s;
+    }
+    .cs-selected.open .cs-arrow {
+        transform: rotate(180deg);
+    }
+    .cs-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        background: #fff;
+        border: 1px solid #6777ef;
+        border-top: none;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+        z-index: 9999;
+        max-height: 260px;
+        display: none;
+        flex-direction: column;
+    }
+    .cs-dropdown.open {
+        display: flex;
+    }
+    .cs-search-box {
+        padding: 8px 10px;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    .cs-search-input {
+        width: 100%;
+        padding: 5px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .cs-search-input:focus {
+        border-color: #6777ef;
+    }
+    .cs-list {
+        overflow-y: auto;
+        flex: 1;
+    }
+    .cs-item {
+        padding: 8px 12px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        color: #495057;
+    }
+    .cs-item:hover {
+        background: #f0f2ff;
+        color: #6777ef;
+    }
+    .cs-item.active {
+        background: #6777ef;
+        color: #fff;
+    }
+    .cs-no-results {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        color: #adb5bd;
+        font-style: italic;
+        text-align: center;
+        display: none;
+    }
 </style>
 
 <!-- Library untuk export Excel dan PDF -->
@@ -226,7 +331,8 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
                         <div class="filter-semester">
                             <div class="row">
                                 <div class="col-md-8 offset-md-4 col-lg-4 offset-lg-8 ml-auto">
-                                    <select class="form-control" id="semesterFilter">
+                                    <!-- Hidden native select (untuk form & aksesibilitas) -->
+                                    <select id="semesterFilter" style="display:none;">
                                         <option value=""><?= t('all_semester') ?></option>
                                         <?php if (!empty($periodes)): ?>
                                             <?php foreach ($periodes as $periode): ?>
@@ -236,6 +342,22 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
                                             <?php endforeach; ?>
                                         <?php endif; ?>
                                     </select>
+
+                                    <!-- Custom searchable dropdown -->
+                                    <label class="cs-label" for="semesterFilter"><?= t('label_semester') ?> :</label>
+                                    <div class="cs-wrapper" id="csWrapper">
+                                        <div class="cs-selected" id="csSelected">
+                                            <span id="csSelectedText"><?= t('all_semester') ?></span>
+                                            <span class="cs-arrow">&#9660;</span>
+                                        </div>
+                                        <div class="cs-dropdown" id="csDropdown">
+                                            <div class="cs-search-box">
+                                                <input type="text" class="cs-search-input" id="csSearchInput" placeholder="Cari semester..." autocomplete="off">
+                                            </div>
+                                            <div class="cs-list" id="csList"></div>
+                                            <div class="cs-no-results" id="csNoResults">Tidak ada hasil ditemukan</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -347,22 +469,98 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
 
 <script>
     (function() {
-        // Filter Semester - Auto reload on change
-        const semesterFilter = document.getElementById('semesterFilter');
-        if (semesterFilter) {
-            semesterFilter.addEventListener('change', function() {
-                const selectedValue = this.value;
-                const currentUrl = new URL(window.location.href);
+        // ===== Custom Searchable Select =====
+        (function() {
+            const nativeSelect  = document.getElementById('semesterFilter');
+            const wrapper       = document.getElementById('csWrapper');
+            const selected      = document.getElementById('csSelected');
+            const selectedText  = document.getElementById('csSelectedText');
+            const dropdown      = document.getElementById('csDropdown');
+            const searchInput   = document.getElementById('csSearchInput');
+            const list          = document.getElementById('csList');
+            const noResults     = document.getElementById('csNoResults');
 
-                if (selectedValue === '') {
-                    currentUrl.searchParams.delete('semester');
+            if (!nativeSelect || !wrapper) return;
+
+            // Build list items from native select options
+            const options = Array.from(nativeSelect.options);
+            let activeValue = nativeSelect.value;
+
+            function buildList(filter) {
+                filter = (filter || '').toLowerCase().trim();
+                list.innerHTML = '';
+                let count = 0;
+                options.forEach(function(opt) {
+                    if (filter && !opt.text.toLowerCase().includes(filter)) return;
+                    const item = document.createElement('div');
+                    item.className = 'cs-item' + (opt.value === activeValue ? ' active' : '');
+                    item.textContent = opt.text;
+                    item.dataset.value = opt.value;
+                    item.addEventListener('click', function() {
+                        selectOption(opt.value, opt.text);
+                    });
+                    list.appendChild(item);
+                    count++;
+                });
+                noResults.style.display = count === 0 ? 'block' : 'none';
+            }
+
+            function selectOption(value, text) {
+                activeValue = value;
+                selectedText.textContent = text;
+                nativeSelect.value = value;
+                closeDropdown();
+
+                // Navigate
+                const url = new URL(window.location.href);
+                if (value === '') {
+                    url.searchParams.delete('semester');
                 } else {
-                    currentUrl.searchParams.set('semester', selectedValue);
+                    url.searchParams.set('semester', value);
                 }
+                window.location.href = url.toString();
+            }
 
-                window.location.href = currentUrl.toString();
+            function openDropdown() {
+                selected.classList.add('open');
+                dropdown.classList.add('open');
+                searchInput.value = '';
+                buildList('');
+                searchInput.focus();
+            }
+
+            function closeDropdown() {
+                selected.classList.remove('open');
+                dropdown.classList.remove('open');
+            }
+
+            // Set initial displayed text
+            const initOpt = options.find(o => o.value === nativeSelect.value);
+            if (initOpt) selectedText.textContent = initOpt.text;
+
+            selected.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdown.classList.contains('open')) {
+                    closeDropdown();
+                } else {
+                    openDropdown();
+                }
             });
-        }
+
+            searchInput.addEventListener('input', function() {
+                buildList(this.value);
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!wrapper.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+
+            // Build initial list
+            buildList('');
+        })();
 
         // ================ TOAST NOTIFICATION ================
         function showToast(message, type) {
