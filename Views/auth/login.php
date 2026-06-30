@@ -136,7 +136,7 @@ function L(string $key): string
         <!-- Floating Logo -->
         <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10">
             <div class="bg-white p-1 rounded-full shadow-md border-4 border-white">
-                <img src="<?= base_url('template/assets/img/logo-gunadarma.png') ?>" alt="Logo" class="w-20 h-20 rounded-full object-contain">
+                <img src="<?= base_url('img/Logo_LPM_UG_.png') ?>" alt="Logo LPM UG" class="w-20 h-20 rounded-full object-contain">
             </div>
         </div>
 

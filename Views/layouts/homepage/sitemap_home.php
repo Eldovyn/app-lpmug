@@ -25,7 +25,7 @@ if (in_array($langParam, $supported, true)) {
     <div class="row g-5">
         <div class="col-lg-3 col-md-6">
             <h1 class="text-white mb-4">
-                <img class="img-fluid me-3 w-25" src="<?= base_url('template/assets/img/logo-gunadarma.png') ?>" alt="" />LPM UG
+                <img class="img-fluid me-3 w-25" src="<?= base_url('img/Logo_LPM_UG_.png') ?>" alt="Logo LPM UG" />LPM UG
             </h1>
             <p>
                 <?= $lang === 'en'
