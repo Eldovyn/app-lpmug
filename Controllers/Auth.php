@@ -16,29 +16,42 @@ class Auth extends BaseController
         if (session('user_id') == true) {
             return redirect()->to(site_url('dashboard'));
         }
+
+        $num1 = rand(1, 9);
+        $num2 = rand(1, 9);
+        $data['captcha_num1'] = $num1;
+        $data['captcha_num2'] = $num2;
+        session()->set('captcha_answer', $num1 + $num2);
+
         return view('auth/login', $data);
     }
 
     public function loginProcess()
     {
         $post = $this->request->getPost();
+
+        // Validasi Captcha
+        $captchaInput = $post['captcha'] ?? '';
+        $captchaAnswer = session()->get('captcha_answer');
+
+        if ($captchaInput === '' || (int)$captchaInput !== (int)$captchaAnswer) {
+            return redirect()->back()->with('error', 'Jawaban keamanan salah.');
+        }
+
         $query = $this->db->table('tbl_users')->getWhere(['nidn' => $post['nidn']]);
         $user = $query->getRow();
 
-        if ($user) {
-            if (password_verify($post['password'], $user->password)) {
-                // Regenerate session ID to prevent session fixation
-                session()->regenerate(true);
-                
-                $params = ['user_id' => $user->user_id];
-                session()->set($params);
+        if ($user && password_verify($post['password'], $user->password)) {
+            // Regenerate session ID to prevent session fixation
+            session()->regenerate(true);
 
-                return redirect()->to(site_url('dashboard'))->with('success', 'Selamat datang.');
-            } else {
-                return redirect()->back()->with('error', '<br>Maaf Password anda salah.');
-            }
+            $params = ['user_id' => $user->user_id];
+            session()->set($params);
+
+            return redirect()->to(site_url('dashboard'))->with('success', 'Selamat datang.');
         } else {
-            return redirect()->back()->with('error', '<br>Maaf NIDN/Username anda tidak ditemukan.');
+            // Generic message to prevent username enumeration
+            return redirect()->back()->with('error', 'NIDN/Username atau password salah.');
         }
     }
 
@@ -50,6 +63,12 @@ class Auth extends BaseController
         if (session('user_id') == true) {
             return redirect()->to(site_url('dashboard'));
         }
+
+        $num1 = rand(1, 9);
+        $num2 = rand(1, 9);
+        $data['captcha_num1'] = $num1;
+        $data['captcha_num2'] = $num2;
+        session()->set('captcha_answer', $num1 + $num2);
 
         // Load models for dropdowns
         $jurusanModel = new \App\Models\JurusanModel();
@@ -68,6 +87,13 @@ class Auth extends BaseController
         $builder = $db->table('tbl_users');
 
         $data['title_tab'] = 'Registrasi &mdash; LPM UG';
+
+        $captchaInput = $this->request->getPost('captcha') ?? '';
+        $captchaAnswer = session()->get('captcha_answer');
+
+        if ($captchaInput === '' || (int)$captchaInput !== (int)$captchaAnswer) {
+            return redirect()->back()->withInput()->with('error', 'Maaf, jawaban keamanan (Captcha) salah.');
+        }
 
         $rules = [
             'user_name' => [
@@ -99,11 +125,10 @@ class Auth extends BaseController
                 ],
             ],
             'password' => [
-                // 'rules' => 'required|min_length[6]',
-                'rules' => 'required',
+                'rules' => 'required|min_length[8]',
                 'errors' => [
                     'required'   => 'Password tidak boleh kosong.',
-                    // 'min_length' => 'Password harus 6 karakter.'
+                    'min_length' => 'Password minimal 8 karakter.',
                 ],
             ],
             'password_konfirmasi' => [
@@ -122,9 +147,10 @@ class Auth extends BaseController
                 ],
             ],
             'role_id' => [
-                'rules' => 'required',
+                'rules' => 'required|in_list[4,5]',
                 'errors' => [
-                    'required'   => 'Silahkan pilih mendaftar sebagai terlebih dahulu.'
+                    'required' => 'Silahkan pilih mendaftar sebagai terlebih dahulu.',
+                    'in_list'  => 'Role pendaftaran tidak valid.',
                 ],
             ],
             'syarat' => [

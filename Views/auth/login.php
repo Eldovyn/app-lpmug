@@ -25,6 +25,9 @@ $T = [
         'label_pass'    => 'Password',
         'ph_pass'       => 'Masukkan password Anda',
         'inv_pass'      => 'Mohon isi password anda',
+        'label_captcha' => 'Keamanan: Berapa hasil',
+        'ph_captcha'    => 'Masukkan hasil penjumlahan',
+        'inv_captcha'   => 'Mohon isi jawaban keamanan',
         'btn_login'     => 'Masuk Sekarang',
         'no_account'    => 'Belum punya akun?',
         'register_here' => 'Buat disini',
@@ -43,6 +46,9 @@ $T = [
         'label_pass'    => 'Password',
         'ph_pass'       => 'Enter your password',
         'inv_pass'      => 'Please enter your password',
+        'label_captcha' => 'Security: What is the result of',
+        'ph_captcha'    => 'Enter the sum',
+        'inv_captcha'   => 'Please enter the security answer',
         'btn_login'     => 'Login Now',
         'no_account'    => "Don't have an account?",
         'register_here' => 'Create here',
@@ -75,693 +81,189 @@ function L(string $key): string
 
 <?= $this->section('content') ?>
 
-<!-- Custom CSS for Enhanced Login Page -->
+<!-- Tailwind CSS Login Implementation (Preflight Disabled to protect Bootstrap) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        corePlugins: {
+            preflight: false,
+        }
+    }
+</script>
+
+<!-- Toastify CSS & JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
 <style>
-    .login-container {
-        animation: fadeInUp 0.6s ease-out;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card-primary {
-        border: none;
-        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
-        border-radius: 20px;
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: white;
-    }
-
-    .card-primary:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 35px 30px;
-        border: none;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .card-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-        animation: pulse 3s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-
-        0%,
-        100% {
-            transform: scale(1);
-            opacity: 0.5;
-        }
-
-        50% {
-            transform: scale(1.1);
-            opacity: 0.8;
-        }
-    }
-
-    .card-header h4 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.8rem;
-        color: #ffffff !important;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        position: relative;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .card-header h4 i {
-        margin-right: 12px;
-        font-size: 2rem;
-        animation: bounce 2s ease-in-out infinite;
-    }
-
-    @keyframes bounce {
-
-        0%,
-        100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-10px);
-        }
-    }
-
-    .card-body {
-        padding: 40px 35px;
-    }
-
-    .alert {
-        border: none;
-        border-radius: 15px;
-        padding: 18px 22px;
-        animation: slideInDown 0.5s ease-out;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    @keyframes slideInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .alert-success {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border-left: 5px solid #28a745;
-        color: #155724;
-    }
-
-    .alert-danger {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
-        border-left: 5px solid #dc3545;
-        color: #721c24;
-        animation: shake 0.5s ease-out;
-    }
-
-    @keyframes shake {
-
-        0%,
-        100% {
-            transform: translateX(0);
-        }
-
-        25% {
-            transform: translateX(-10px);
-        }
-
-        75% {
-            transform: translateX(10px);
-        }
-    }
-
-    .alert-warning {
-        background: linear-gradient(135deg, #fff3cd 0%, #ffe5a1 100%);
-        border: none;
-        border-radius: 15px;
-        border-left: 5px solid #ffc107;
-        padding: 20px;
-        margin-bottom: 30px;
-    }
-
-    .alert-warning b {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1.05rem;
-        color: #856404;
-    }
-
-    .alert-warning p {
-        margin-top: 10px;
-        margin-bottom: 0;
-        line-height: 1.7;
-        color: #856404;
-    }
-
-    .form-group {
-        margin-bottom: 25px;
-        animation: fadeIn 0.5s ease-out backwards;
-        position: relative;
-    }
-
-    .form-group:nth-child(1) {
-        animation-delay: 0.1s;
-    }
-
-    .form-group:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-
-    .form-group:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .form-group label {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 10px;
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .form-group label i {
-        color: #667eea;
-        font-size: 1.1rem;
-    }
-
-    .form-control {
-        border-radius: 12px;
-        border: 2px solid #e0e6ed;
-        padding: 14px 18px;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        height: 52px;
-        background: #f8f9fa;
-    }
-
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
-        transform: translateY(-2px);
-        background: white;
-    }
-
-    .form-control:valid {
-        border-color: #28a745;
-    }
-
-    .form-control.is-invalid,
-    .form-control:invalid {
-        border-color: #dc3545;
-    }
-
-    .invalid-feedback {
-        display: block;
-        margin-top: 8px;
-        color: #dc3545;
+    /* Custom utility classes to complement preflight:false */
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+    
+    .font-nunito { font-family: 'Nunito', sans-serif; }
+    
+    /* Reset input styles since preflight is false */
+    .tw-input {
+        appearance: none;
+        background-color: #f3f4f6;
+        border: 1px solid transparent;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
         font-size: 0.875rem;
-        font-weight: 500;
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    .input-icon-wrapper {
-        position: relative;
-    }
-
-    .input-icon-wrapper .form-control {
-        padding-right: 50px;
-    }
-
-    .toggle-password {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        color: #667eea;
-        cursor: pointer;
-        font-size: 1.2rem;
-        transition: all 0.3s ease;
-        padding: 8px;
-        z-index: 10;
-    }
-
-    .toggle-password:hover {
-        color: #764ba2;
-        transform: translateY(-50%) scale(1.2);
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 12px;
-        padding: 16px;
-        font-weight: 700;
-        font-size: 1.15rem;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary:before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-primary:hover:before {
-        width: 400px;
-        height: 400px;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
-    }
-
-    .btn-primary:active {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary i {
-        margin-right: 10px;
-        font-size: 1.2rem;
-    }
-
-    .text-muted a {
-        color: #667eea;
-        font-weight: 600;
-        text-decoration: none;
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .text-muted a:hover {
-        color: #764ba2;
-    }
-
-    .text-muted a::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 2px;
-        bottom: -2px;
-        left: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        transition: width 0.3s ease;
-    }
-
-    .text-muted a:hover::after {
+        line-height: 1.25rem;
+        color: #374151;
         width: 100%;
+        outline: none;
+        transition: all 0.2s;
+        box-sizing: border-box;
     }
-
-    .footer-copyright {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 20px;
-        border-radius: 15px;
-        margin-top: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        animation: fadeIn 0.8s ease-out;
+    .tw-input:focus {
+        background-color: #ffffff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
     }
-
-    .footer-copyright a {
-        color: #667eea;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-
-    .footer-copyright a:hover {
-        color: #764ba2;
-    }
-
-    /* Loading Spinner */
-    .btn-loading {
-        pointer-events: none;
-        opacity: 0.7;
-    }
-
-    .spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(255, 255, 255, .3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .card-header h4 {
-            font-size: 1.4rem;
-        }
-
-        .card-body {
-            padding: 30px 25px;
-        }
-
-        .btn-primary {
-            font-size: 1rem;
-            padding: 14px;
-        }
-    }
-
-    /* Focus ring animation */
-    @keyframes focusRing {
-        0% {
-            box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
-        }
-
-        100% {
-            box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
-        }
-    }
-
-    .form-control:focus {
-        animation: focusRing 0.6s ease-out;
+    .tw-btn {
+        appearance: none;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: inherit;
     }
 </style>
 
-<section class="section">
-    <div class="container login-container">
-        <div class="row w-100">
-            <div class="col-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-3 col-xl-4 offset-xl-4">
-
-                <?php if (session()->getFlashdata('success')): ?>
-                    <div class="alert alert-success alert-dismissible show fade">
-                        <div class="alert-body">
-                            <button class="close" data-dismiss="alert">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            <strong><i class="fas fa-check-circle"></i> <?= L('success_title') ?></strong>
-                            <p class="mb-0 mt-2"><?= session()->getFlashdata('success'); ?></p>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (session()->getFlashdata('error')): ?>
-                    <div class="alert alert-danger alert-dismissible show fade">
-                        <div class="alert-body">
-                            <button class="close" data-dismiss="alert">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            <strong><i class="fas fa-exclamation-triangle"></i> <?= L('error_title') ?></strong>
-                            <p class="mb-0 mt-2"><?= session()->getFlashdata('error'); ?></p>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <div class="card card-primary">
-                    <div class="card-header mb-0">
-                        <h4><i class="fas fa-sign-in-alt"></i> <?= L('login_title') ?></h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-warning">
-                            <b class="text-dark">
-                                <i class="fas fa-info-circle"></i> <?= L('info_title') ?>
-                            </b>
-                            <p class="text-small text-dark">
-                                <?= L('info_text') ?>
-                            </p>
-                        </div>
-
-                        <form method="POST" action="<?= site_url('auth/loginProcess'); ?>" class="needs-validation" novalidate="" id="loginForm">
-                            <?= csrf_field(); ?>
-
-                            <div class="form-group mb-3">
-                                <label for="nidn">
-                                    <i class="fas fa-user"></i> <?= L('label_user') ?>
-                                </label>
-                                <input id="nidn" type="text" class="form-control" name="nidn" value="<?= set_value('nidn'); ?>"
-                                    placeholder="<?= L('ph_user') ?>" tabindex="1" required autofocus>
-                                <div class="invalid-feedback">
-                                    <i class="fas fa-exclamation-circle"></i> <?= L('inv_user') ?>
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label for="password" class="control-label">
-                                    <i class="fas fa-lock"></i> <?= L('label_pass') ?>
-                                </label>
-                                <div class="input-icon-wrapper">
-                                    <input id="password" type="password" class="form-control" name="password"
-                                        placeholder="<?= L('ph_pass') ?>" tabindex="2" required>
-                                    <button type="button" class="toggle-password" id="togglePassword">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <div class="invalid-feedback">
-                                    <i class="fas fa-exclamation-circle"></i> <?= L('inv_pass') ?>
-                                </div>
-                            </div>
-
-                            <div class="form-group mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg btn-block" tabindex="4">
-                                    <i class="fas fa-sign-in-alt"></i> <?= L('btn_login') ?>
-                                </button>
-                            </div>
-
-                            <div class="text-center mt-4">
-                                <p class="text-muted mb-2">
-                                    <?= L('no_account') ?> <a href="<?= site_url('registrasi'); ?>"><?= L('register_here') ?></a>
-                                </p>
-                                <p class="text-muted">
-                                    <a href="<?= site_url(); ?>">
-                                        <i class="fas fa-home"></i> <?= L('back_home') ?>
-                                    </a>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="footer-copyright text-center">
-                    <p class="mb-0 text-muted">
-                        Copyright &copy; <?php echo date("Y"); ?> &mdash;
-                        <a href="#">LPM UG</a>
-                    </p>
-                </div>
+<section class="fixed inset-0 z-[9999] overflow-y-auto bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-200 flex items-center justify-center p-4 font-nunito">
+    
+    <div class="relative w-full max-w-md mt-12 mx-auto">
+        <!-- Floating Logo -->
+        <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10">
+            <div class="bg-white p-1 rounded-full shadow-md border-4 border-white">
+                <img src="<?= base_url('template/assets/img/logo-gunadarma.png') ?>" alt="Logo" class="w-20 h-20 rounded-full object-contain">
             </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-[#f8f9fa] rounded-xl shadow-2xl overflow-hidden pt-14 pb-2 relative">
+            
+            <div class="px-8 pb-6">
+                <!-- Header Text -->
+                <div class="text-center mb-6 hidden">
+                    <h2 class="text-xl font-bold text-gray-800">LPM Gunadarma</h2>
+                </div>
+
+                <!-- Alerts removed, handled via Toastify JS below -->
+
+                <!-- Form -->
+                <form method="POST" action="<?= site_url('auth/loginProcess'); ?>" id="loginForm">
+                    <?= csrf_field(); ?>
+
+                    <!-- Username / NIDN -->
+                    <div class="mb-5">
+                        <label for="nidn" class="block text-[13px] font-bold text-gray-800 mb-1">
+                            <?= L('label_user') ?>
+                        </label>
+                        <input id="nidn" name="nidn" type="text" class="tw-input" value="<?= set_value('nidn'); ?>" placeholder="<?= L('ph_user') ?>" tabindex="1" required autofocus>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-5 relative">
+                        <label for="password" class="block text-[13px] font-bold text-gray-800 mb-1">
+                            <?= L('label_pass') ?>
+                        </label>
+                        <input id="password" name="password" type="password" class="tw-input pr-10" placeholder="<?= L('ph_pass') ?>" tabindex="2" required>
+                        <button type="button" class="tw-btn absolute right-3 top-8 text-gray-400 hover:text-gray-600 bg-transparent" id="togglePassword">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Captcha -->
+                    <div class="mb-6">
+                        <label for="captcha" class="block text-[13px] font-bold text-gray-800 mb-1">
+                            <?= L('label_captcha') ?> <?= isset($captcha_num1) ? $captcha_num1 . ' + ' . $captcha_num2 . '?' : '?' ?>
+                        </label>
+                        <input id="captcha" name="captcha" type="number" class="tw-input" placeholder="<?= L('ph_captcha') ?>" tabindex="3" required>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="tw-btn w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors duration-200 text-sm tracking-wide" tabindex="4">
+                        <?= L('btn_login') ?>
+                    </button>
+                    
+                    <!-- Info Text -->
+                    <div class="text-center mt-6 text-[12px] text-gray-500">
+                        <?= L('info_text') ?>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Bottom Section (Like reference image) -->
+            <div class="border-t border-gray-200 bg-[#f4f5f7] px-8 py-4 flex flex-col items-center gap-2 mt-4">
+                <a href="<?= site_url('registrasi'); ?>" class="text-[13px] text-[#3b82f6] font-bold hover:underline">
+                    <?= L('no_account') ?> <?= L('register_here') ?>
+                </a>
+                <a href="<?= site_url(); ?>" class="text-[13px] text-[#3b82f6] font-bold hover:underline">
+                    <?= L('back_home') ?>
+                </a>
+            </div>
+
         </div>
     </div>
 </section>
 
-<!-- Enhanced JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Form validation
-        const form = document.getElementById('loginForm');
-        const nidnInput = document.getElementById('nidn');
-        const passwordInput = document.getElementById('password');
-
-        // Toggle password visibility
         const togglePassword = document.getElementById('togglePassword');
-        if (togglePassword) {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (togglePassword && passwordInput) {
             togglePassword.addEventListener('click', function() {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-
-                const icon = this.querySelector('i');
-                icon.classList.toggle('fa-eye');
-                icon.classList.toggle('fa-eye-slash');
-
-                // Add pulse animation
-                this.style.transform = 'translateY(-50%) scale(1.3)';
-                setTimeout(() => {
-                    this.style.transform = 'translateY(-50%) scale(1)';
-                }, 200);
-            });
-        }
-
-        // Form submission with loading state
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Shake animation on invalid
-                    form.classList.add('was-validated');
-
-                    // Focus first invalid field
-                    const invalidField = form.querySelector(':invalid');
-                    if (invalidField) {
-                        invalidField.focus();
-                        invalidField.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                    }
+                
+                if(type === 'text') {
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
                 } else {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    submitBtn.innerHTML = '<span class="spinner"></span> <?= L('processing') ?>';
-                    submitBtn.classList.add('btn-loading');
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
                 }
             });
         }
 
-        // Auto-dismiss alerts after 5 seconds
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            setTimeout(() => {
-                const closeBtn = alert.querySelector('.close');
-                if (closeBtn) {
-                    closeBtn.click();
+        <?php if (session()->getFlashdata('error')): ?>
+            Toastify({
+                text: <?= json_encode(strip_tags(session()->getFlashdata('error') ?? '')); ?>,
+                duration: 4000,
+                close: true,
+                gravity: "top",
+                position: "center",
+                style: {
+                    background: "linear-gradient(to right, #ef4444, #f87171)",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
+                    fontFamily: "'Nunito', sans-serif",
+                    fontWeight: "bold",
+                    color: "white"
                 }
-            }, 5000);
-        });
+            }).showToast();
+        <?php endif; ?>
 
-        // Input focus effects
-        const inputs = document.querySelectorAll('.form-control');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'scale(1.01)';
-            });
-
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'scale(1)';
-            });
-
-            // Real-time validation feedback
-            input.addEventListener('input', function() {
-                if (this.value.length > 0) {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                } else {
-                    this.classList.remove('is-valid');
+        <?php if (session()->getFlashdata('success')): ?>
+            Toastify({
+                text: <?= json_encode(strip_tags(session()->getFlashdata('success') ?? '')); ?>,
+                duration: 4000,
+                close: true,
+                gravity: "top",
+                position: "center",
+                style: {
+                    background: "linear-gradient(to right, #10b981, #34d399)",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                    fontFamily: "'Nunito', sans-serif",
+                    fontWeight: "bold",
+                    color: "white"
                 }
-            });
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Alt + L to focus on login field
-            if (e.altKey && e.key === 'l') {
-                e.preventDefault();
-                nidnInput.focus();
-            }
-
-            // Alt + P to focus on password field
-            if (e.altKey && e.key === 'p') {
-                e.preventDefault();
-                passwordInput.focus();
-            }
-        });
-
-        // Add ripple effect to button
-        const button = document.querySelector('.btn-primary');
-        if (button) {
-            button.addEventListener('click', function(e) {
-                const rect = this.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                const ripple = document.createElement('span');
-                ripple.style.cssText = `
-                position: absolute;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.6);
-                left: ${x}px;
-                top: ${y}px;
-                transform: translate(-50%, -50%);
-                animation: ripple 0.6s ease-out;
-                pointer-events: none;
-            `;
-
-                this.appendChild(ripple);
-
-                setTimeout(() => ripple.remove(), 600);
-            });
-        }
-
-        // Add CSS for ripple animation
-        const style = document.createElement('style');
-        style.textContent = `
-        @keyframes ripple {
-            to {
-                transform: translate(-50%, -50%) scale(20);
-                opacity: 0;
-            }
-        }
-        .form-control.is-valid {
-            border-color: #28a745 !important;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-    `;
-        document.head.appendChild(style);
+            }).showToast();
+        <?php endif; ?>
     });
 </script>
 

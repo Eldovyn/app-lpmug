@@ -2,160 +2,810 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
-
 use App\Models\HakAksesModel;
+use App\Models\ProfileModel;
+use App\Models\DosenModel;
+use App\Models\UniversitasModel;
+use App\Models\FakultasModel;
+use App\Models\JurusanModel;
+use App\Models\FungsionalModel;
 use App\Models\MitraModel;
-use App\Models\LaporanModel;
 use App\Models\ProvinsiModel;
 use App\Models\KotaModel;
 use App\Models\PesanModel;
+use App\Models\AbdimasModel;
 use Google\Cloud\Translate\V2\TranslateClient;
 
-class Mitra extends ResourceController
+class Dashboard extends BaseController
 {
     function __construct()
     {
         $this->hak_akses    = new HakAksesModel();
+        $this->dosen        = new DosenModel();
+        $this->universitas  = new UniversitasModel();
+        $this->fakultas     = new FakultasModel();
+        $this->jurusan      = new JurusanModel();
+        $this->fungsional   = new FungsionalModel();
         $this->mitra        = new MitraModel();
-        $this->laporan      = new LaporanModel();
         $this->provinsi     = new ProvinsiModel();
         $this->kota         = new KotaModel();
+        $this->profile      = new ProfileModel();
         $this->pesan        = new PesanModel();
-        helper('filesystem');
+        $this->abdimas      = new AbdimasModel();
     }
 
-    public function updateAlamat()
-    {
-        if ($this->request->getMethod() !== 'post') {
-            return $this->response->setStatusCode(405)->setJSON(['success' => false, 'message' => 'Method not allowed']);
-        }
+    public function index(): string
+{
+    helper('cookie');
+    helper('custom');
 
-        $mitraId = $this->request->getPost('mitra_id');
-        $newAlamat = $this->request->getPost('alamat');
+    // ===== LANG (GET > cookie > default) =====
+    $langCookie = $this->request->getCookie('lang');
+    $langGet    = $this->request->getGet('lang');
 
-        if (empty($mitraId) || empty($newAlamat)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid input']);
-        }
+    $allowed = ['id', 'en'];
 
-        $mitra = $this->mitra->find($mitraId);
-        if (!$mitra) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Mitra not found']);
-        }
-
-        // Update alamat in database
-        $this->mitra->update($mitraId, ['alamat' => $newAlamat]);
-
-        // Optionally, update related laporan records if needed
-        // $this->laporan->where('mitra_id', $mitraId)->set(['alamat' => $newAlamat])->update();
-
-        return $this->response->setJSON(['success' => true, 'message' => 'Alamat updated']);
+    if ($langGet && in_array($langGet, $allowed, true)) {
+        $lang = $langGet;
+    } elseif ($langCookie && in_array($langCookie, $allowed, true)) {
+        $lang = $langCookie;
+    } else {
+        $lang = 'id';
     }
-    /**
-     * Return an array of resource objects, themselves in array format
-     *
-     * @return mixed
-     */
-    public function index()
-    {
-        helper('auth');
 
-        $lang = get_cookie('lang') ?: 'id';
-        $allowed = ['id', 'en'];
-        if (!in_array($lang, $allowed, true)) {
+    if ($langCookie !== $lang) {
+        set_cookie('lang', $lang, 60 * 60 * 24 * 30);
+    }
+
+    // ===== INISIALISASI $data TERLEBIH DAHULU =====
+    $data         = [];
+    $data['lang'] = $lang;
+
+    // ===== PESAN - gunakan array_merge, JANGAN overwrite =====
+    $keyword = $this->request->getGet('keyword');
+    $paginated = $this->pesan->getPaginated(100000, $keyword);
+    $data = array_merge($data, $paginated);
+    $data['keyword'] = $keyword;
+    $data['pesan']   = $this->pesan->getPesan();
+
+// ===== GRAFIK LAPORAN PER PERIODE (FIXED - Pastikan 5 periode lengkap) =====
+        $customOrder = ['ATA 2023/2024', 'PTA 2024/2025', 'ATA 2024/2025', 'PTA 2025/2026', 'ATA 2025/2026'];
+
+        // Ambil count laporan per periode
+        $laporanBuilder = $this->db->table('tbl_periode');
+        $laporanBuilder->select("
+            CONCAT(tbl_periode.periode_name, ' ', tbl_periode.tahun_ajaran) AS periode_label,
+            COUNT(tbl_laporan.laporan_id) AS total
+        ");
+        $laporanBuilder->join(
+            'tbl_laporan',
+            'tbl_periode.periode_id = tbl_laporan.periode_id AND tbl_laporan.periode_id IS NOT NULL',
+            'left'
+        );
+        $laporanBuilder->whereIn("CONCAT(tbl_periode.periode_name, ' ', tbl_periode.tahun_ajaran)", $customOrder);
+        $laporanBuilder->groupBy('tbl_periode.periode_id');
+
+        $laporanCounts = $laporanBuilder->get()->getResultArray();
+
+        // Buat map: label => total (untuk lookup cepat)
+        $countsMap = array_column($laporanCounts, 'total', 'periode_label');
+
+        // Pastikan semua periode ada (isi 0 jika tidak ada laporan)
+        $labels = [];
+        $totals = [];
+        foreach ($customOrder as $periode) {
+            $labels[] = $periode;
+            $totals[] = isset($countsMap[$periode]) ? (int)$countsMap[$periode] : 0;
+        }
+
+        // DEBUG (hapus setelah testing)
+        // log_message('debug', 'Labels: ' . json_encode($labels));
+        // log_message('debug', 'Totals: ' . json_encode($totals));
+
+        $data['periodeLabels']           = json_encode($labels);
+        $data['periodeTotals']           = json_encode($totals);
+        $data['totalLaporanKeseluruhan'] = array_sum($totals);
+        $data['countJurusanUnik']        = $this->abdimas->countJurusanUnik();
+
+        // ===== FILTER JURUSAN =====
+        $jurusan                 = $this->request->getGet('jurusan') ?? null;
+        $data['selectedJurusan'] = $jurusan;
+
+        $data['dataPerProdi']     = $this->cacheRemember('data_per_prodi_unique', 1800, function() {
+            return $this->abdimas->getDataJumlahPerProdiUnique();
+        });
+        $data['dataKetuaAnggota'] = $this->cacheRemember('data_ketua_anggota', 1800, function() {
+            return $this->abdimas->getJumlahKetuaAnggota();
+        });
+
+    // ===== JURUSAN LIST =====
+    $data['jurusanList'] = $this->cacheRemember("jurusan_list_{$lang}", 60 * 60 * 24, function () use ($lang) {
+        $list = $this->abdimas->getJurusanList();
+
+        $out = [];
+        foreach ($list as $row) {
+            $value = $row['jurusan_id'] ?? $row['id'] ?? $row['kode'] ?? null;
+            $label = $row['jurusan_name'] ?? $row['nama'] ?? $row['nama_jurusan'] ?? $row['jurusan'] ?? '';
+
+            if ($lang === 'en') {
+                $label = $this->translateText($label, 'id', 'en');
+            }
+
+            $out[] = ['value' => $value, 'label' => $label];
+        }
+        return $out;
+    });
+
+    // ===== LUARAN CHART DATA (all, for JS filtering) =====
+    $data['luaranChartData'] = $this->cacheRemember("luaran_all_{$lang}", 60 * 60 * 24, function () use ($lang) {
+        $rows = $this->abdimas->getLuaranDataByJurusan();
+
+        if ($lang === 'en') {
+            foreach ($rows as &$r) {
+                if (isset($r['luaran_name'])) {
+                    $r['luaran_name'] = $this->translateText((string) $r['luaran_name'], 'id', 'en');
+                }
+                if (isset($r['jurusan_name'])) {
+                    $r['jurusan_name'] = $this->translateText((string) $r['jurusan_name'], 'id', 'en');
+                }
+            }
+            unset($r);
+        }
+
+        return $rows;
+    });
+
+    // ===== CHART DATA LUARAN DEFAULT =====
+    $data['chartData'] = $this->cacheRemember("luaran_default_{$lang}", 60 * 60 * 24, function () use ($lang) {
+        $rows = $this->abdimas->getLuaranChartData(null);
+
+        if ($lang === 'en') {
+            foreach ($rows as &$r) {
+                if (isset($r['luaran_name'])) {
+                    $r['luaran_name'] = $this->translateText((string) $r['luaran_name'], 'id', 'en');
+                }
+            }
+            unset($r);
+        }
+
+        return $rows;
+    });
+
+    // ===== FLAG DATA FOR LOGGED IN USER =====
+    $user = userLogin();
+    if ($user && isset($user->user_id)) {
+        $data['user_flag_status']         = getUserFlagStatus($user->user_id);
+        $data['user_has_hibah_flag']       = hasHibahFlag($user->user_id);
+        $data['user_approved_hibah_count'] = countApprovedHibah($user->user_id);
+        $data['user_hibah_flags']          = getHibahFlags($user->user_id);
+    } else {
+        $data['user_flag_status']         = null;
+        $data['user_has_hibah_flag']       = false;
+        $data['user_approved_hibah_count'] = 0;
+        $data['user_hibah_flags']          = [];
+    }
+
+    return view('dashboard', $data);
+}
+
+
+    // CONTROLLER UNTUK PROFILE SUPERIOR //
+    public function profile($id = null)
+    {
+        if (userLogin()->role_id != 1) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+        $data['title_tab'] = 'Profile user &mdash; LPM UG';
+        $data['title'] = 'Profile user';
+        $data['pesan'] = $this->pesan->getPesan();
+        $profile_user =  $this->profile->find($id);
+        if (is_object($profile_user) && $profile_user->role_id != 2 && $profile_user->role_id != 3 && $profile_user->role_id != 4 && $profile_user->role_id != 5) {
+            $data['profile_user'] = $profile_user;
+            return view('profile/edit_profile', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user/update/' . userLogin()->user_id));
+        }
+        return view('profile/edit_profile', $data);
+    }
+    public function update_profile($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        $data = [
+            'user_name'     => $this->request->getVar('user_name'),
+            'nidn'          => $this->request->getVar('nidn'),
+            'email'         => $this->request->getVar('email'),
+            'kontak'        => $this->request->getVar('kontak'),
+            // 'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
             $lang = 'id';
         }
 
-        $user = userLogin();
+        $message = 'Data anda berhasil diupdate';
 
-        if (!$user) {
-            $errorMsg = $this->translateText('Silakan login terlebih dahulu', 'id', $lang);
-            return redirect()->to(site_url('login'))->with('error', $errorMsg);
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
         }
-
-        // Cek role_id user
-        if (!in_array($user->role_id, [1, 2, 3, 4])) {
-            $errorMsg = $this->translateText('Anda tidak memiliki akses ke halaman ini', 'id', $lang);
-            return redirect()->to(site_url('dashboard'))->with('error', $errorMsg);
-        }
-
-        $keyword = $this->request->getGet('keyword');
-
-        $data = $this->mitra->getPaginated(100000, $keyword);
-        $data['keyword'] = $keyword;
-        $data['pesan'] = $this->pesan->getPesan();
-
-        return view('mitra/index', $data);
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('profile_user/update/' . userLogin()->user_id))->with('success', $message);
     }
 
-
-    /**
-     * Return the properties of a resource object
-     *
-     * @return mixed
-     */
-    public function show($id = null)
+    public function ubah_password($id = null)
     {
-        //
-    }
-
-    /**
-     * Return a new resource object, with default properties
-     *
-     * @return mixed
-     */
-    public function new()
-    {
-        if (userLogin()->role_id != 1 && userLogin()->role_id != 2 && userLogin()->role_id != 3 && userLogin()->role_id != 4) {
+        if (userLogin()->role_id != 1) {
             return redirect()->to(site_url('dashboard'));
-        } elseif (userLogin()->role_id == '') {
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
             return redirect()->to(site_url('login'));
         }
 
-        // Language support - check query param first, then cookie, default to id
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = get_cookie('lang') ?: 'id';
-        }
-        if (!in_array($lang, ['id', 'en'], true)) {
-            $lang = 'id';
-        }
-
-        // Set cookie if lang from query param
-        if ($this->request->getGet('lang')) {
-            set_cookie('lang', $lang, 60 * 60 * 24 * 30);
-        }
-
-        $titleDict = [
-            'id' => 'Tambah Mitra',
-            'en' => 'Add Partner'
-        ];
-        $title = $titleDict[$lang] ?? 'Tambah Mitra';
-
-        $data['title_tab'] = $title . ' — LPM UG';
-        $data['title'] = $title;
+        $data['title_tab'] = 'Ubah password &mdash; LPM UG';
+        $data['title'] = 'Ubah Password';
         $data['pesan'] = $this->pesan->getPesan();
         $data['validation'] = \Config\Services::validation();
 
-        // $data['hak_akses'] = $this->hak_akses->findAll();
-        $data['kota'] = $this->kota->getAll();
+        $ubah_password =  $this->profile->find($id);
+        if (is_object($ubah_password) && $ubah_password->role_id != 2 && $ubah_password->role_id != 3 && $ubah_password->role_id != 4 && $ubah_password->role_id != 5) {
+            $data['ubah_password'] = $ubah_password;
+            $data['validation'] = \Config\Services::validation();
 
-        return view('mitra/new', $data);
+            return view('profile/ubah_password', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/ubah_password', $data);
     }
 
-    /**
-     * Create a new resource object, from "posted" parameters
-     *
-     * @return mixed
-     */
-    public function create()
+    public function update_password($id)
     {
-        if (!$this->validate($this->mitra->getValidationRules())) {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        if (!$this->validate($this->profile->getValidationRules())) {
             $validation = \Config\Services::validation();
             // dd($validation);
             return redirect()->back()->withInput()->with('validation', $validation);
         }
 
+        $data = [
+            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('ubah_password/update/' . userLogin()->user_id))->with('success', $message);
+    }
+    // END CONTROLLER UNTUK PROFILE SUPERIOR //
+
+
+    // CONTROLLER UNTUK PROFILE ADMINISTRATOR//
+    public function profile_admin($id = null)
+    {
+        if (userLogin()->role_id != 2) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $baseTitle = 'Profile User';
+        $title = $baseTitle;
+
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $title = service('translation')->translateCached($baseTitle, 'id', 'en'); // V2 translate :contentReference[oaicite:0]{index=0}
+        }
+        $data['title'] = $title;
+        $data['title_tab'] = $title . ' &mdash; LPM UG';
+
+        $data['pesan'] = $this->pesan->getPesan();
+
+        $profile_user_admin =  $this->profile->find($id);
+        if (is_object($profile_user_admin) && $profile_user_admin->role_id != 1 && $profile_user_admin->role_id != 3 && $profile_user_admin->role_id != 4 && $profile_user_admin->role_id != 5) {
+            $data['profile_user_admin'] = $profile_user_admin;
+            $data['universitas'] = $this->universitas->findAll();
+            $data['fungsional'] = $this->fungsional->findAll();
+            $data['jurusan'] = $this->jurusan->getAll();
+            $data['kota'] = $this->kota->getAll();
+            return view('profile/edit_profile_admin', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user_admin/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/edit_profile_admin', $data);
+    }
+
+    public function update_profile_admin($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        $data = [
+            'gelar_dpn'     => $this->request->getVar('gelar_dpn'),
+            'user_name'     => $this->request->getVar('user_name'),
+            'gelar_blkng'   => $this->request->getVar('gelar_blkng'),
+            'sinta_id'      => $this->request->getVar('sinta_id'),
+            'nidn'          => $this->request->getVar('nidn'),
+            'email'         => $this->request->getVar('email'),
+            'kontak'        => $this->request->getVar('kontak'),
+            'universitas_id' => $this->request->getVar('universitas_id'),
+            'jurusan_id'    => $this->request->getVar('jurusan_id'),
+            'fungsional_id' => $this->request->getVar('fungsional_id'),
+            'kota_id'       => $this->request->getVar('kota_id'),
+            'alamat'        => $this->request->getVar('alamat'),
+        ];
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('profile_user_admin/update/' . userLogin()->user_id))->with('success', $message);
+    }
+
+    public function ubah_password_admin($id = null)
+    {
+        helper('cookie');
+        if (userLogin()->role_id != 2) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $baseTitle = 'Ubah Password';
+        $title = $baseTitle;
+
+        $allowed = ['id', 'en'];
+
+        $lang = $this->request->getCookie('lang') ?? 'id';
+
+        if (!in_array($lang, $allowed, true)) {
+            $lang = 'id';
+        }
+
+        $reqLang = $this->request->getGet('lang');
+        if ($reqLang && in_array($reqLang, $allowed, true)) {
+            set_cookie('lang', $reqLang, 60 * 60 * 24 * 30);
+            $lang = $reqLang;
+        }
+
+        if ($lang === 'en') {
+            $title = service('translation')->translateCached($baseTitle, 'id', 'en');
+        }
+        $data['title'] = $title;
+        $data['title_tab'] = $title . ' &mdash; LPM UG';
+
+        $data['pesan'] = $this->pesan->getPesan();
+        $data['validation'] = \Config\Services::validation();
+
+        $ubah_password_admin =  $this->profile->find($id);
+        if (is_object($ubah_password_admin) && $ubah_password_admin->role_id != 1 && $ubah_password_admin->role_id != 3 && $ubah_password_admin->role_id != 4 && $ubah_password_admin->role_id != 5) {
+            $data['ubah_password_admin'] = $ubah_password_admin;
+            $data['validation'] = \Config\Services::validation();
+
+            return view('profile/ubah_password_admin', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('ubah_password_admin/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/ubah_password_admin', $data);
+    }
+
+    public function update_password_admin($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        if (!$this->validate($this->profile->getValidationRules())) {
+            $validation = \Config\Services::validation();
+            // dd($validation);
+            return redirect()->back()->withInput()->with('validation', $validation);
+        }
+
+        $data = [
+            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('ubah_password_admin/update/' . userLogin()->user_id))->with('success', $message);
+    }
+    // END CONTROLLER UNTUK PROFILE ADMINISTRATOR //
+
+    // CONTROLLER UNTUK PROFILE STAFF LPM UG //
+    public function profile_staff($id = null)
+    {
+        if (userLogin()->role_id != 3) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $baseTitle = 'Profile User'; // kalau mau ID lebih "indo": 'Profil Staff'
+        $title = $baseTitle;
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $title = service('translation')->translateCached($baseTitle, 'id', 'en'); // V2 translate :contentReference[oaicite:0]{index=0}
+        }
+        $data['title'] = $title;
+        $data['title_tab'] = $title . ' &mdash; LPM UG';
+
+        $profile_user_staff =  $this->profile->find($id);
+        if (is_object($profile_user_staff) && $profile_user_staff->role_id != 1 && $profile_user_staff->role_id != 2 && $profile_user_staff->role_id != 4 && $profile_user_staff->role_id != 5) {
+            $data['profile_user_staff'] = $profile_user_staff;
+            $data['universitas'] = $this->universitas->findAll();
+            $data['fungsional'] = $this->fungsional->findAll();
+            $data['jurusan'] = $this->jurusan->getAll();
+            $data['kota'] = $this->kota->getAll();
+            return view('profile/edit_profile_staff', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user_staff/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/edit_profile_staff', $data);
+    }
+
+
+    public function update_profile_staff($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        $data = [
+            'gelar_dpn'     => $this->request->getVar('gelar_dpn'),
+            'user_name'     => $this->request->getVar('user_name'),
+            'gelar_blkng'   => $this->request->getVar('gelar_blkng'),
+            'sinta_id'      => $this->request->getVar('sinta_id'),
+            'nidn'          => $this->request->getVar('nidn'),
+            'email'         => $this->request->getVar('email'),
+            'kontak'        => $this->request->getVar('kontak'),
+            'universitas_id' => $this->request->getVar('universitas_id'),
+            'jurusan_id'    => $this->request->getVar('jurusan_id'),
+            'fungsional_id' => $this->request->getVar('fungsional_id'),
+            'kota_id'       => $this->request->getVar('kota_id'),
+            'alamat'        => $this->request->getVar('alamat'),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('profile_user_staff/update/' . userLogin()->user_id))->with('success', $message);
+    }
+
+    public function ubah_password_staff($id = null)
+    {
+        if (userLogin()->role_id != 3) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $baseTitle = 'Ubah Password'; // kalau mau ID lebih "indo": 'Profil Staff'
+        $title = $baseTitle;
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $title = service('translation')->translateCached($baseTitle, 'id', 'en'); // V2 translate :contentReference[oaicite:0]{index=0}
+        }
+        $data['title'] = $title;
+        $data['title_tab'] = $title . ' &mdash; LPM UG';
+
+        $data['validation'] = \Config\Services::validation();
+
+        $ubah_password_staff =  $this->profile->find($id);
+        if (is_object($ubah_password_staff) && $ubah_password_staff->role_id != 1 && $ubah_password_staff->role_id != 2 && $ubah_password_staff->role_id != 4 && $ubah_password_staff->role_id != 5) {
+            $data['ubah_password_staff'] = $ubah_password_staff;
+            $data['validation'] = \Config\Services::validation();
+
+            return view('profile/ubah_password_staff', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('ubah_password_staff/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/ubah_password_staff', $data);
+    }
+
+    public function update_password_staff($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        if (!$this->validate($this->profile->getValidationRules())) {
+            $validation = \Config\Services::validation();
+            // dd($validation);
+            return redirect()->back()->withInput()->with('validation', $validation);
+        }
+
+        $data = [
+            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('ubah_password_staff/update/' . userLogin()->user_id))->with('success', $message);
+    }
+    // END CONTROLLER UNTUK PROFILE STAFF LPM UG //
+
+    // CONTROLLER UNTUK PROFILE DOSEN //
+    public function profile_dosen($id = null)
+    {
+        if (userLogin()->role_id != 4) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $data['title_tab'] = 'Profile user &mdash; LPM UG';
+        $data['title'] = 'Profile user';
+
+        $profile_user_dosen =  $this->profile->find($id);
+        if (is_object($profile_user_dosen) && $profile_user_dosen->role_id != 1 && $profile_user_dosen->role_id != 2 && $profile_user_dosen->role_id != 3 && $profile_user_dosen->role_id != 5) {
+            $data['profile_user_dosen'] = $profile_user_dosen;
+            $data['universitas'] = $this->universitas->findAll();
+            $data['fungsional'] = $this->fungsional->findAll();
+            $data['jurusan'] = $this->jurusan->getAll();
+            $data['kota'] = $this->kota->getAll();
+            return view('profile/edit_profile_dosen', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user_dosen/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/edit_profile_dosen', $data);
+    }
+
+    public function update_profile_dosen($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        $data = [
+            'gelar_dpn'     => $this->request->getVar('gelar_dpn'),
+            'user_name'     => $this->request->getVar('user_name'),
+            'gelar_blkng'   => $this->request->getVar('gelar_blkng'),
+            'sinta_id'      => $this->request->getVar('sinta_id'),
+            'nidn'          => $this->request->getVar('nidn'),
+            'email'         => $this->request->getVar('email'),
+            'kontak'        => $this->request->getVar('kontak'),
+            'universitas_id' => $this->request->getVar('universitas_id'),
+            'jurusan_id'    => $this->request->getVar('jurusan_id'),
+            'fungsional_id' => $this->request->getVar('fungsional_id'),
+            'kota_id'       => $this->request->getVar('kota_id'),
+            'alamat'        => $this->request->getVar('alamat'),
+        ];
+        helper('cookie');
+
+        $allowed = ['id', 'en'];
+
+        $lang = $this->request->getGet('lang');
+
+        if (! $lang) {
+            $lang = $this->request->getCookie('lang');
+        }
+
+        $lang = strtolower(trim((string) ($lang ?? 'id')));
+        if (! in_array($lang, $allowed, true)) {
+            $lang = 'id';
+        }
+
+        $reqLang = $this->request->getGet('lang');
+        if ($reqLang && in_array($reqLang, $allowed, true)) {
+            set_cookie('lang', $reqLang, 60 * 60 * 24 * 30);
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('profile_user_dosen/update/' . userLogin()->user_id))->with('success', $message);
+    }
+
+    public function ubah_password_dosen($id = null)
+    {
+        helper('cookie');
+
+        $langCookie = $this->request->getCookie('lang');
+        $langGet    = $this->request->getGet('lang');
+
+        $allowed = ['id', 'en'];
+
+        if ($langGet && in_array($langGet, $allowed, true)) {
+            $lang = $langGet;
+        } elseif ($langCookie && in_array($langCookie, $allowed, true)) {
+            $lang = $langCookie;
+        } else {
+            $lang = 'id';
+        }
+
+        if ($langCookie !== $lang) {
+            set_cookie('lang', $lang);
+        }
+
+        service('language')->setLocale($lang);
+
+        if (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        if (userLogin()->role_id != 4) {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $data['lang'] = $lang;
+
+        if ($lang === 'en') {
+            $data['title_tab'] = 'Change password &mdash; LPM UG';
+            $data['title']     = 'Change Password';
+        } else {
+            $data['title_tab'] = 'Ubah password &mdash; LPM UG';
+            $data['title']     = 'Ubah Password';
+        }
+
+        $data['validation'] = \Config\Services::validation();
+
+        $ubah_password_dosen = $this->profile->find($id);
+
+        if (
+            is_object($ubah_password_dosen) &&
+            $ubah_password_dosen->role_id != 1 &&
+            $ubah_password_dosen->role_id != 2 &&
+            $ubah_password_dosen->role_id != 3 &&
+            $ubah_password_dosen->role_id != 5
+        ) {
+            $data['ubah_password_dosen'] = $ubah_password_dosen;
+            return view('profile/ubah_password_dosen', $data);
+        }
+
+        return redirect()->to(site_url('ubah_password_dosen/update/' . userLogin()->user_id));
+    }
+
+    public function update_password_dosen($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
+        if (!$this->validate($this->profile->getValidationRules())) {
+            $validation = \Config\Services::validation();
+            // dd($validation);
+            return redirect()->back()->withInput()->with('validation', $validation);
+        }
+
+        $data = [
+            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+        ];
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
+
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        // dd($data);
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('ubah_password_dosen/update/' . userLogin()->user_id))->with('success', $message);
+    }
+    // END CONTROLLER UNTUK PROFILE DOSEN //
+
+    // CONTROLLER UNTUK PROFILE MITRA //
+    public function profile_mitra($id = null)
+    {
+        if (userLogin()->role_id != 5) {
+            return redirect()->to(site_url('dashboard'));
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
+            return redirect()->to(site_url('login'));
+        }
+
+        $data['title_tab'] = 'Profile user &mdash; LPM UG';
+        $data['title'] = 'Profile user';
+
+        $profile_user_mitra =  $this->profile->find($id);
+        if (is_object($profile_user_mitra) && $profile_user_mitra->role_id != 1 && $profile_user_mitra->role_id != 2 && $profile_user_mitra->role_id != 3 && $profile_user_mitra->role_id != 4) {
+            $data['profile_user_mitra'] = $profile_user_mitra;
+            $data['kota'] = $this->kota->getAll();
+            return view('profile/edit_profile_mitra', $data);
+        } else {
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('profile_user_mitra/update/' . userLogin()->user_id));
+        }
+
+        return view('profile/edit_profile_mitra', $data);
+    }
+
+    public function update_profile_mitra($id)
+    {
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
+        }
         $data = [
             'user_name'     => $this->request->getVar('user_name'),
             'nidn'          => $this->request->getVar('nidn'),
@@ -163,835 +813,81 @@ class Mitra extends ResourceController
             'kontak'        => $this->request->getVar('kontak'),
             'kota_id'       => $this->request->getVar('kota_id'),
             'alamat'        => $this->request->getVar('alamat'),
-            'kebutuhan'     => $this->request->getVar('kebutuhan'),
-            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
-            'role_id'       => 5,
-            'status'        => 1,
         ];
-
-
-        $this->mitra->insert($data);
-
-        // Language support for flash message - check query param first, then cookie, default to id
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = get_cookie('lang') ?: 'id';
-        }
-        if (!in_array($lang, ['id', 'en'], true)) {
+        // dd($data);
+        $this->profile->update($id, $data);
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
             $lang = 'id';
         }
 
-        $successMsg = ($lang === 'en') ? 'New data has been successfully saved.' : 'Data baru anda berhasil disimpan.';
+        $message = 'Data anda berhasil diupdate';
 
-        return redirect()->to(site_url('mitra'))->with('success', $successMsg);
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        return redirect()->to(site_url('profile_user_mitra/update/' . userLogin()->user_id))->with('success', $message);
     }
 
-    /**
-     * Return the editable properties of a resource object
-     *
-     * @return mixed
-     */
-    public function edit($id = null)
+    public function ubah_password_mitra($id = null)
     {
-        if (userLogin()->role_id != 1 && userLogin()->role_id != 2 && userLogin()->role_id != 3 && userLogin()->role_id != 4) {
+        if (userLogin()->role_id != 5) {
             return redirect()->to(site_url('dashboard'));
-        } elseif (userLogin()->role_id == '') {
+        } elseif (userLogin()->role_id == '' && userLogin()->user_id == '') {
             return redirect()->to(site_url('login'));
         }
 
-        // Language support - check query param first, then cookie, default to id
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = get_cookie('lang') ?: 'id';
-        }
-        if (!in_array($lang, ['id', 'en'], true)) {
-            $lang = 'id';
-        }
+        $data['title_tab'] = 'Ubah password &mdash; LPM UG';
+        $data['title'] = 'Ubah Password';
 
-        // Set cookie if lang from query param
-        if ($this->request->getGet('lang')) {
-            set_cookie('lang', $lang, 60 * 60 * 24 * 30);
-        }
+        $data['validation'] = \Config\Services::validation();
 
-        $titleDict = [
-            'id' => 'Edit Mitra',
-            'en' => 'Edit Partner'
-        ];
-        $title = $titleDict[$lang] ?? 'Edit Mitra';
+        $ubah_password_mitra =  $this->profile->find($id);
+        if (is_object($ubah_password_mitra) && $ubah_password_mitra->role_id != 1 && $ubah_password_mitra->role_id != 2 && $ubah_password_mitra->role_id != 3 && $ubah_password_mitra->role_id != 4) {
+            $data['ubah_password_mitra'] = $ubah_password_mitra;
+            $data['validation'] = \Config\Services::validation();
 
-        $data['title_tab'] = $title . ' — LPM UG';
-        $data['title'] = $title;
-        $data['pesan'] = $this->pesan->getPesan();
-
-        $mitra =  $this->mitra->find($id);
-        if (is_object($mitra)) {
-            $data['mitra'] = $mitra;
-            $data['hak_akses'] = $this->hak_akses->findAll();
-            $data['kota'] = $this->kota->getAll();
-            return view('mitra/edit', $data);
+            return view('profile/ubah_password_mitra', $data);
         } else {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            // throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+            return redirect()->to(site_url('ubah_password_mitra/update/' . userLogin()->user_id));
         }
 
-        return view('mitra/edit', $data);
-    }
-
-    /**
-     * Add or update a model resource, from "posted" properties
-     *
-     * @return mixed
-     */
-    public function update($id = null)
-    {
-        $data = $this->request->getPost();
-        // $data = [
-        //     'user_name'     => $this->request->getVar('user_name'),
-        //     'nidn'          => $this->request->getVar('nidn'),
-        //     'email'         => $this->request->getVar('email'),
-        //     'kontak'        => $this->request->getVar('kontak'),
-        //     'kota_id'       => $this->request->getVar('kota_id'),
-        //     'alamat'        => $this->request->getVar('alamat'),
-        //     // 'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
-        // ];
-
-        $this->mitra->update($id, $data);
-
-        // Language support for flash message - check query param first, then cookie, default to id
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = get_cookie('lang') ?: 'id';
-        }
-        if (!in_array($lang, ['id', 'en'], true)) {
-            $lang = 'id';
-        }
-
-        $successMsg = ($lang === 'en') ? 'Your data has been successfully updated.' : 'Data anda berhasil diupdate.';
-
-        return redirect()->to(site_url('mitra'))->with('success', $successMsg);
-    }
-
-    /**
-     * Delete the designated resource object from the model
-     *
-     * @return mixed
-     */
-    public function delete($id = null)
-    {
-        if (!in_array(userLogin()->role_id, [1, 2, 3, 4])) {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $mitra = $this->mitra->find($id);
-        if (!$mitra) {
-            return redirect()->to(site_url('mitra'))->with('error', 'Data mitra tidak ditemukan.');
-        }
-
-        // Hapus semua laporan terkait mitra terlebih dahulu
-        $db = \Config\Database::connect();
-        $db->table('tbl_laporan')->where('mitra_id', $id)->delete();
-
-        if ($this->mitra->delete($id)) {
-            // Language support for flash message - check query param first, then cookie, default to id
-            $lang = $this->request->getGet('lang');
-            if (! $lang) {
-                $lang = get_cookie('lang') ?: 'id';
-            }
-            if (!in_array($lang, ['id', 'en'], true)) {
-                $lang = 'id';
-            }
-
-            $successMsg = ($lang === 'en') ? 'Partner data has been successfully deleted.' : 'Data mitra berhasil dihapus.';
-            return redirect()->to(site_url('mitra'))->with('success', $successMsg);
-        } else {
-            $lang = $this->request->getGet('lang');
-            if (! $lang) {
-                $lang = get_cookie('lang') ?: 'id';
-            }
-            if (!in_array($lang, ['id', 'en'], true)) {
-                $lang = 'id';
-            }
-
-            $errorMsg = ($lang === 'en') ? 'Failed to delete partner data.' : 'Gagal menghapus data mitra.';
-            return redirect()->to(site_url('mitra'))->with('error', $errorMsg);
-        }
+        return view('profile/ubah_password_mitra', $data);
     }
 
 
-    // === Form Upload SPM (halaman terpisah) - UPDATED TO USE tbl_dokumen_mitra ===
-    public function uploadFormSpm($id)
+    public function update_password_mitra($id)
     {
-        helper(['auth', 'cookie']);
-
-        $allowed = ['id', 'en'];
-
-        $lang = get_cookie('lang') ?: 'id';
-        $allowed = ['id', 'en'];
-        if (!in_array($lang, $allowed, true)) {
-            $lang = 'id';
+        $currentUser = userLogin();
+        if (!$currentUser || ($currentUser->user_id != $id && !in_array((int)$currentUser->role_id, [1, 2], true))) {
+            return redirect()->to(site_url('dashboard'))->with('error', 'Akses tidak sah.');
         }
-
-        $user = userLogin();
-
-        if (!$user) {
-            $errorMsg = $this->translateText('Silakan login terlebih dahulu', 'id', $lang);
-            return redirect()->to(site_url('dashboard'))->with('error', $errorMsg);
+        if (!$this->validate($this->profile->getValidationRules())) {
+            $validation = \Config\Services::validation();
+            // dd($validation);
+            return redirect()->back()->withInput()->with('validation', $validation);
         }
-
-        // Cek role_id dan user_id
-        if ($user->role_id != 5 || $user->user_id != $id) {
-            $errorMsg = $this->translateText('Anda tidak memiliki akses ke halaman ini', 'id', $lang);
-            return redirect()->to(site_url('dashboard'))->with('error', $errorMsg);
-        }
-
-        $mitra = $this->mitra->find($id);
-        if (!$mitra) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        // Get only active periods (status = 1)
-        $periodeModel = new \App\Models\PeriodeModel();
-        $periodes = $periodeModel->where('status', 1)->findAll();
-
-        // Get existing dokumen from tbl_dokumen_mitra for this mitra
-        $dokumenMitraModel = new \App\Models\DokumenMitraModel();
-        $dokumen_mitra = $dokumenMitraModel->getDokumenByMitra($id);
-
-        $data['mitra'] = $mitra;
-        $data['periodes'] = $periodes;
-        $data['dokumen_mitra'] = $dokumen_mitra;
-        $data['title_tab'] = 'Upload SPM';
-        $data['title'] = 'Upload SPM';
-        $data['pesan'] = $this->pesan->getPesan();
-
-        return view('mitra/upload_spm', $data);
-    }
-
-    // === Form Upload SKM (halaman terpisah) - UPDATED TO USE tbl_dokumen_mitra ===
-    public function uploadFormSkm($id)
-    {
-        helper(['auth', 'cookie']);
-
-        // ✅ Cek apakah user sudah login
-        $user = userLogin();
-
-        $lang = get_cookie('lang') ?: 'id';
-        $allowed = ['id', 'en'];
-        if (!in_array($lang, $allowed, true)) {
-            $lang = 'id';
-        }
-
-        // ✅ Jika user tidak ada (null), redirect ke login
-        if (!$user) {
-            $errorMsg = $this->translateText('Silakan login terlebih dahulu', 'id', $lang);
-            return redirect()->to(site_url('login'))
-                ->with('error', $errorMsg);
-        }
-
-        // ✅ Cek role_id dan user_id
-        if ($user->role_id != 5 || $user->user_id != $id) {
-            $errorMsg = $this->translateText('Anda tidak memiliki akses ke halaman ini', 'id', $lang);
-            return redirect()->to(site_url('dashboard'))
-                ->with('error', $errorMsg);
-        }
-
-        $mitra = $this->mitra->find($id);
-        if (!$mitra) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        // Get only active periods (status = 1)
-        $periodeModel = new \App\Models\PeriodeModel();
-        $periodes = $periodeModel->where('status', 1)->findAll();
-
-        // Get existing dokumen from tbl_dokumen_mitra for this mitra
-        $dokumenMitraModel = new \App\Models\DokumenMitraModel();
-        $dokumen_mitra = $dokumenMitraModel->getDokumenByMitra($id);
-
-        $data['mitra'] = $mitra;
-        $data['periodes'] = $periodes;
-        $data['dokumen_mitra'] = $dokumen_mitra;
-        $data['title_tab'] = 'Upload SKM';
-        $data['title'] = 'Upload SKM';
-        $data['pesan'] = $this->pesan->getPesan();
-
-        return view('mitra/upload_skm', $data);
-    }
-
-    // === Submit Upload (SPM / SKM) - UPDATED TO USE tbl_dokumen_mitra ===
-    public function uploadSubmit($id)
-    {
-        if (userLogin()->role_id != 5 || userLogin()->user_id != $id) {
-            return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-        }
-
-        $docType = $this->request->getPost('doc_type'); // spm atau skm
-        $periodeId = $this->request->getPost('periode_id'); // periode yang dipilih
-        $nomorSurat = $this->request->getPost('nomor_surat'); // ambil nomor surat dari form
-
-        if (!$periodeId) {
-            return redirect()->back()->with('error', 'Periode harus dipilih');
-        }
-
-        // Nomor surat hanya wajib untuk SPM
-        if ($docType === 'spm' && empty($nomorSurat)) {
-            return redirect()->back()->with('error', 'Nomor surat SPM harus diisi');
-        }
-
-        $file = $this->request->getFile($docType);
-
-        if (!$file || !$file->isValid()) {
-            return redirect()->back()->with('error', 'File tidak valid');
-        }
-
-        if ($file->getSize() > 5 * 1024 * 1024) {
-            return redirect()->back()->with('error', 'Maksimal ukuran file 5 MB');
-        }
-
-        if ($file->getExtension() !== 'pdf') {
-            return redirect()->back()->with('error', 'File harus PDF');
-        }
-
-        // Load DokumenMitraModel
-        $dokumenMitraModel = new \App\Models\DokumenMitraModel();
-
-        // Cek apakah dokumen sudah ada untuk mitra, periode, dan tipe ini
-        $existingDokumen = $dokumenMitraModel->getDokumenByMitraAndType($id, $docType, $periodeId);
-        if ($existingDokumen) {
-            return redirect()->back()->with('error', strtoupper($docType) . ' untuk periode ini sudah diupload. Silakan hapus yang ada terlebih dahulu jika ingin mengganti.');
-        }
-
-        // Cek apakah nomor surat sudah pernah dipakai di periode yang sama (hanya untuk SPM)
-        if (!empty($nomorSurat)) {
-            $existingNomor = $dokumenMitraModel->where('periode_id', $periodeId)
-                ->where('nomor_surat', $nomorSurat)
-                ->first();
-            if ($existingNomor) {
-                return redirect()->back()->with('error', 'Nomor surat tersebut sudah digunakan di periode ini!');
-            }
-        }
-
-        // Rename file
-        $newName = $docType . '_' . $id . '_' . $periodeId . '_' . time() . '.pdf';
-        $uploadPath = 'uploads/dokumen_mitra/';
-        if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
-
-        $file->move($uploadPath, $newName, true);
-
-        // Data untuk insert ke tbl_dokumen_mitra
-        $data = [
-            'mitra_id'    => $id,
-            'periode_id'  => $periodeId,
-            'doc_type'    => $docType,
-            'nomor_surat' => $nomorSurat,
-            'file_path'   => $uploadPath . $newName,
-        ];
-
-        // Simpan ke tbl_dokumen_mitra
-        if ($dokumenMitraModel->insert($data)) {
-            return redirect()->back()->with('success', strtoupper($docType) . ' dan nomor surat berhasil diupload untuk periode yang dipilih!');
-        } else {
-            return redirect()->back()->with('error', 'Gagal menyimpan data ke database.');
-        }
-    }
-
-
-
-    // === View/Download Dokumen (akses dosen role_id = 4) ===
-    public function downloadDokumen($id, $type, $periodeId = null)
-    {
-        if (userLogin()->role_id != 4) {
-            return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-        }
-
-        $mitra = $this->mitra->find($id);
-        if (!$mitra) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-
-        // Get file from tbl_laporan (period-based)
-        if ($periodeId) {
-            $laporan = $this->laporan->getLaporanByMitraAndPeriode($id, $periodeId);
-            $fileName = ($type === 'spm') ? $laporan->spm : $laporan->skm;
-        } else {
-            // Fallback: get latest file if no period specified
-            $laporans = $this->laporan->getLaporanByMitra($id);
-            $fileName = null;
-            foreach ($laporans as $laporan) {
-                if (($type === 'spm' && !empty($laporan->spm)) || ($type === 'skm' && !empty($laporan->skm))) {
-                    $fileName = ($type === 'spm') ? $laporan->spm : $laporan->skm;
-                    break;
-                }
-            }
-        }
-
-        if (!$fileName) {
-            return redirect()->back()->with('error', 'File tidak ditemukan untuk periode yang dipilih');
-        }
-
-        $filePath = WRITEPATH . 'berkas/' . $type . '/' . $periodeId . '/' . $fileName;
-
-        if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'File tidak ditemukan di: ' . $filePath);
-        }
-
-        return $this->response->download($filePath, null);
-    }
-
-    // === Preview Dokumen (akses untuk mitra sendiri dan dosen role_id = 4) ===
-    public function previewDokumen($id, $type, $periodeId = null)
-    {
-        try {
-            // Debug: Log the current user info
-            log_message('debug', 'PreviewDokumen called with ID: ' . $id . ', Type: ' . $type . ', Periode: ' . $periodeId);
-
-            // Allow access for: mitra owner (role_id = 5) or dosen (role_id = 4)
-            $currentUser = userLogin();
-            if (!$currentUser) {
-                log_message('error', 'User not logged in');
-                return redirect()->to(site_url('login'))->with('error', 'Silakan login terlebih dahulu');
-            }
-
-            log_message('debug', 'Current user: ' . json_encode($currentUser));
-
-            if (($currentUser->role_id != 5 || $currentUser->user_id != $id) &&
-                $currentUser->role_id != 4
-            ) {
-                log_message('error', 'Unauthorized access attempt by user ID: ' . $currentUser->user_id . ', Role: ' . $currentUser->role_id);
-                return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-            }
-
-            $mitra = $this->mitra->find($id);
-            if (!$mitra) {
-                log_message('error', 'Mitra not found with ID: ' . $id);
-                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-            }
-
-            // Get file from tbl_laporan (period-based)
-            $fileName = null;
-            if ($periodeId) {
-                $laporan = $this->laporan->getLaporanByMitraAndPeriode($id, $periodeId);
-                if ($laporan) {
-                    $fileName = ($type === 'spm') ? $laporan->spm : $laporan->skm;
-                }
-            } else {
-                // Fallback: get latest file if no period specified
-                $laporans = $this->laporan->getLaporanByMitra($id);
-                foreach ($laporans as $laporan) {
-                    if (($type === 'spm' && !empty($laporan->spm)) || ($type === 'skm' && !empty($laporan->skm))) {
-                        $fileName = ($type === 'spm') ? $laporan->spm : $laporan->skm;
-                        break;
-                    }
-                }
-            }
-
-            if (!$fileName) {
-                log_message('error', 'File not found for mitra ID: ' . $id . ', type: ' . $type . ', periode: ' . $periodeId);
-                return redirect()->back()->with('error', 'File tidak ditemukan untuk periode yang dipilih');
-            }
-
-            $filePath = WRITEPATH . 'berkas/' . $type . '/' . $periodeId . '/' . $fileName;
-
-            log_message('debug', 'File path: ' . $filePath);
-            log_message('debug', 'File exists: ' . (file_exists($filePath) ? 'YES' : 'NO'));
-
-            if (!file_exists($filePath)) {
-                log_message('error', 'File not found at path: ' . $filePath);
-                return redirect()->back()->with('error', 'File tidak ditemukan di: ' . $filePath);
-            }
-
-            // Read file content
-            $fileContent = file_get_contents($filePath);
-            if ($fileContent === false) {
-                log_message('error', 'Failed to read file content from: ' . $filePath);
-                return redirect()->back()->with('error', 'Gagal membaca file');
-            }
-
-            // Set headers for PDF preview in browser
-            return $this->response
-                ->setStatusCode(200)
-                ->setContentType('application/pdf')
-                ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"')
-                ->setHeader('Content-Length', strlen($fileContent))
-                ->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-                ->setHeader('Pragma', 'no-cache')
-                ->setHeader('Expires', '0')
-                ->setBody($fileContent);
-        } catch (\Exception $e) {
-            log_message('error', 'Error in previewDokumen: ' . $e->getMessage());
-            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
-
-    // === Simple Preview Test (for debugging) ===
-    public function previewTest($id, $type)
-    {
-        try {
-            log_message('debug', 'PreviewTest called with ID: ' . $id . ', Type: ' . $type);
-
-            $currentUser = userLogin();
-            if (!$currentUser) {
-                return $this->response->setStatusCode(401)->setBody('Unauthorized: User not logged in');
-            }
-
-            $filePath = WRITEPATH . 'berkas/' . $type . '/test.pdf';
-            log_message('debug', 'Test file path: ' . $filePath);
-            log_message('debug', 'Test file exists: ' . (file_exists($filePath) ? 'YES' : 'NO'));
-
-            if (!file_exists($filePath)) {
-                return $this->response->setStatusCode(404)->setBody('Test file not found at: ' . $filePath);
-            }
-
-            $fileContent = file_get_contents($filePath);
-            return $this->response
-                ->setStatusCode(200)
-                ->setContentType('application/pdf')
-                ->setHeader('Content-Disposition', 'inline; filename="test.pdf"')
-                ->setBody($fileContent);
-        } catch (\Exception $e) {
-            log_message('error', 'Error in previewTest: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setBody('Error: ' . $e->getMessage());
-        }
-    }
-
-    // === Delete Laporan (SPM/SKM) ===
-    public function deleteLaporan($laporanId, $type = 'all')
-    {
-        try {
-            $currentUser = userLogin();
-            if (!$currentUser) {
-                return redirect()->to(site_url('login'))->with('error', 'Silakan login terlebih dahulu');
-            }
-
-            if (!in_array($currentUser->role_id, [4, 5])) {
-                return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-            }
-
-            $laporan = $this->laporan->find($laporanId);
-            if (!$laporan) {
-                return redirect()->back()->with('error', 'Laporan tidak ditemukan');
-            }
-
-            if ($currentUser->role_id == 5 && $laporan->mitra_id != $currentUser->user_id) {
-                return redirect()->back()->with('error', 'Unauthorized');
-            }
-
-            // Use the new method that only deletes files and clears database fields
-            // without deleting the entire record (avoids foreign key constraints)
-            $result = $this->laporan->deleteLaporanFiles($laporanId);
-
-            if ($result) {
-                return redirect()->back()->with('success', 'File berhasil dihapus');
-            } else {
-                return redirect()->back()->with('error', 'Gagal menghapus file');
-            }
-        } catch (\Exception $e) {
-            log_message('error', 'Error in deleteLaporan: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
-
-    // === Serve Laporan Files ===
-    public function laporan($filename)
-    {
-        $path = WRITEPATH . 'berkas/laporan/' . $filename;
-
-        if (!file_exists($path)) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException("File not found: $filename");
-        }
-
-        return $this->response
-            ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->setBody(file_get_contents($path));
-    }
-
-    // === Serve Bukti Kegiatan Files ===
-    public function kegiatan($filename)
-    {
-        $path = WRITEPATH . 'berkas/kegiatan/' . $filename;
-
-        if (!file_exists($path)) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException("File not found: $filename");
-        }
-
-        return $this->response
-            ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->setBody(file_get_contents($path));
-    }
-
-    // === Serve SPM Files ===
-    public function spm($filename)
-    {
-        $path = WRITEPATH . 'berkas/spm/' . $filename;
-
-        if (!file_exists($path)) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException("File not found: $filename");
-        }
-
-        return $this->response
-            ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->setBody(file_get_contents($path));
-    }
-
-    // === Serve SKM Files ===
-    public function skm($filename)
-    {
-        $path = WRITEPATH . 'berkas/skm/' . $filename;
-
-        if (!file_exists($path)) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException("File not found: $filename");
-        }
-
-        return $this->response
-            ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->setBody(file_get_contents($path));
-    }
-
-    // === Generate Surat Balasan PDF (untuk mitra) - FIXED VERSION ===
-    public function generateSuratBalasanPdf($laporanId)
-    {
-        if (userLogin()->role_id != 5) {
-            return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-        }
-
-        $mitraId = userLogin()->user_id;
-        $laporan = $this->laporan->find($laporanId);
-
-        // Check if laporan belongs to this mitra
-        if (!$laporan || $laporan->mitra_id != $mitraId) {
-            return redirect()->to(site_url('mitra/surat-balasan'))->with('error', 'Unauthorized access');
-        }
-
-        // Check if laporan has required data
-        if (empty($laporan->judul_kegiatan) || empty($laporan->ketua_id)) {
-            return redirect()->to(site_url('mitra/surat-balasan'))
-                ->with('error', 'Data laporan belum lengkap. Pastikan Judul Kegiatan dan Ketua Pengusul sudah terisi.');
-        }
-
-        try {
-            // Create AbdimasController instance and call the PDF method directly
-            $abdimasController = new \App\Controllers\Abdimas();
-
-            // Set the user context for the PDF generation
-            // The AbdimasController will handle role validation internally
-
-            return $abdimasController->suratBalasanPdf($laporanId);
-        } catch (\Exception $e) {
-            log_message('error', 'Error generating PDF from Mitra controller: ' . $e->getMessage());
-            return redirect()->to(site_url('mitra/surat-balasan'))
-                ->with('error', 'Gagal generate PDF: ' . $e->getMessage());
-        }
-    }
-    public function updateNomorSurat()
-    {
-        if ($this->request->getMethod() !== 'post') {
-            return $this->response->setStatusCode(405)->setJSON(['success' => false, 'message' => 'Method not allowed']);
-        }
-
-        $laporanId = $this->request->getPost('laporan_id');
-        $nomorSurat = $this->request->getPost('nomor_surat');
-
-        if (empty($laporanId) || empty($nomorSurat)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap']);
-        }
-
-        $laporan = $this->laporan->find($laporanId);
-        if (!$laporan) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Laporan tidak ditemukan']);
-        }
-
-        $this->laporan->update($laporanId, ['nomor_surat' => $nomorSurat]);
-
-        return $this->response->setJSON(['success' => true, 'message' => 'Nomor surat berhasil diperbarui']);
-    }
-
-
-    // === Alternative method jika ingin lebih aman ===
-    public function generateSuratBalasanPdfSafe($laporanId)
-    {
-        if (userLogin()->role_id != 5) {
-            return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-        }
-
-        $mitraId = userLogin()->user_id;
-        $laporan = $this->laporan->find($laporanId);
-
-        // Validation
-        if (!$laporan || $laporan->mitra_id != $mitraId) {
-            return redirect()->to(site_url('mitra/surat-balasan'))->with('error', 'Unauthorized access');
-        }
-
-        if (empty($laporan->judul_kegiatan) || empty($laporan->ketua_id)) {
-            return redirect()->to(site_url('mitra/surat-balasan'))
-                ->with('error', 'Data laporan belum lengkap. Pastikan Judul Kegiatan dan Ketua Pengusul sudah terisi.');
-        }
-
-        // Store session data for PDF generation
-        session()->setTempdata('pdf_generation', [
-            'mitra_id' => $mitraId,
-            'laporan_id' => $laporanId,
-            'timestamp' => time()
-        ], 300); // 5 minutes expiry
-
-        // Direct URL construction for Abdimas controller
-        $pdfUrl = site_url('abdimas/surat-balasan-pdf/' . $laporanId);
-
-        // Return redirect that opens in same tab/new tab
-        return redirect()->to($pdfUrl);
-    }
-
-    // === Update method suratBalasan untuk handle success messages ===
-    public function suratBalasan()
-    {
-        helper('auth');
-        if (userLogin()->role_id != 5) {
-            return redirect()->to(site_url('dashboard'))->with('error', 'Unauthorized');
-        }
-
-        $mitraId = userLogin()->user_id;
-
-        // Get all laporan for this mitra (dengan atau tanpa surat balasan)
-        $laporans = $this->laporan->getLaporanByMitra($mitraId);
-
-        // Pisahkan laporan berdasarkan status surat balasan
-        $laporanWithSurat = [];
-        $laporanWithoutSurat = [];
-
-        foreach ($laporans as $laporan) {
-            if (!empty($laporan->surat_balasan_path) && file_exists(WRITEPATH . 'berkas/' . $laporan->surat_balasan_path)) {
-                $laporanWithSurat[] = $laporan;
-            } else {
-                // Cek apakah laporan sudah memiliki data lengkap untuk generate surat balasan
-                if (!empty($laporan->judul_kegiatan) && !empty($laporan->ketua_id)) {
-                    $laporanWithoutSurat[] = $laporan;
-                }
-            }
-        }
-
-        // Handle flash messages
-        $flashData = session()->getFlashdata();
 
         $data = [
-            'title_tab' => 'Surat Balasan &mdash; LPM UG',
-            'title' => 'Surat Balasan',
-            'pesan' => $this->pesan->getPesan(),
-            'laporan_with_surat' => $laporanWithSurat,
-            'laporan_without_surat' => $laporanWithoutSurat,
-            'all_laporans' => $laporans, // untuk backward compatibility
-            'flash_messages' => $flashData
+            'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
         ];
+        // dd($data);
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
+            $lang = 'id';
+        }
 
-        return view('mitra/surat_balasan', $data);
+        $message = 'Data anda berhasil diupdate';
+
+        // ===== Translate jika EN =====
+        if ($lang === 'en') {
+            $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
+        }
+        $this->profile->update($id, $data);
+        return redirect()->to(site_url('ubah_password_mitra/update/' . userLogin()->user_id))->with('success', $message);
     }
+    // END CONTROLLER UNTUK PROFILE DOSEN //
 
-    /**
-     * Check if SPM file exists for the given mitra and period
-     *
-     * @param int $mitraId
-     * @param int $periodeId
-     * @return bool
-     */
-    private function checkSpmExists($mitraId, $periodeId)
-    {
-        if (empty($mitraId) || empty($periodeId)) {
-            return false;
-        }
-
-        // Check in tbl_dokumen_mitra if SPM exists for this mitra and period
-        $dokumenMitraModel = new \App\Models\DokumenMitraModel();
-        $existingSpm = $dokumenMitraModel->getDokumenByMitraAndType($mitraId, 'spm', $periodeId);
-        if (!empty($existingSpm)) {
-            return true;
-        }
-
-        // Check if SPM file exists in the filesystem
-        $spmDir = WRITEPATH . 'berkas/spm/' . $periodeId . '/';
-        $spmPattern = 'spm_' . $mitraId . '_' . $periodeId . '_*.pdf';
-        $spmFiles = glob($spmDir . $spmPattern);
-
-        if (!empty($spmFiles)) {
-            return true;
-        }
-
-        // Also check in the database (tbl_laporan) if there's a record with SPM
-        $laporan = $this->laporan->getSpmRecordByMitraAndPeriode($mitraId, $periodeId);
-
-        if ($laporan && !empty($laporan->spm)) {
-            // Check if the file actually exists on disk
-            $filePath = WRITEPATH . 'berkas/spm/' . $periodeId . '/' . $laporan->spm;
-            return file_exists($filePath);
-        }
-
-        return false;
-    }
-
-    // Temporary test method for checkSpmExists - REMOVE AFTER TESTING
-    public function testCheckSpmExists($mitraId = null, $periodeId = null)
-    {
-        if (userLogin()->role_id != 1) {
-            return $this->response->setJSON(['error' => 'Unauthorized']);
-        }
-
-        $mitraId = $mitraId ?? $this->request->getGet('mitra_id');
-        $periodeId = $periodeId ?? $this->request->getGet('periode_id');
-
-        $result = $this->checkSpmExists($mitraId, $periodeId);
-
-        return $this->response->setJSON([
-            'mitra_id' => $mitraId,
-            'periode_id' => $periodeId,
-            'spm_exists' => $result
-        ]);
-    }
-
-    /**
-     * Update password for a mitra account (called from list page modal)
-     */
-    public function updatePassword($id = null)
-    {
-        if (!in_array(userLogin()->role_id, [1, 2, 3])) {
-            return redirect()->to(site_url('mitra'))->with('error', 'Anda tidak memiliki akses untuk mengubah password.');
-        }
-
-        $mitra = $this->mitra->find($id);
-        if (!$mitra) {
-            return redirect()->to(site_url('mitra'))->with('error', 'Data mitra tidak ditemukan.');
-        }
-
-        $newPassword     = $this->request->getPost('new_password');
-        $confirmPassword = $this->request->getPost('confirm_password');
-
-        // Validasi server-side
-        if (empty($newPassword) || strlen($newPassword) < 6) {
-            return redirect()->back()->with('error', 'Password minimal 6 karakter.');
-        }
-
-        if ($newPassword !== $confirmPassword) {
-            return redirect()->back()->with('error', 'Password dan konfirmasi tidak cocok.');
-        }
-
-        $this->mitra->update($id, [
-            'password' => password_hash($newPassword, PASSWORD_BCRYPT),
-        ]);
-
-        return redirect()->to(site_url('mitra'))->with('success', 'Password mitra "' . esc($mitra->user_name) . '" berhasil diperbarui.');
-    }
-
-    private function translateText(string $text, string $source, string $target): string
-    {
-        $key = $_ENV['apiKeyGoogleTranslateApi'] ?? null;
-        if (!$key || trim($text) === '') return $text;
-
-        // Google Translate v2 client :contentReference[oaicite:3]{index=3}
-        $client = new TranslateClient(['key' => $key]);
-
-        $result = $client->translate($text, [
-            'source' => $source,
-            'target' => $target,
-        ]);
-
-        return $result['text'] ?? $text;
-    }
 }
