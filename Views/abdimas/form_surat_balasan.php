@@ -16,7 +16,7 @@
         <div class="col-12 col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-body">
-                    <form action="<?= site_url('abdimas/generate-surat-balasan-pdf-from-form'); ?>" method="POST" autocomplete="off">
+                    <form action="<?= site_url('abdimas/generate-surat-balasan-pdf-from-form'); ?>" method="POST" autocomplete="off" target="_blank">
                         <?= csrf_field(); ?>
                         <div class="form-group">
                             <label for="judul_kegiatan">Judul Kegiatan <span class="text-danger">*</span></label>

@@ -28,8 +28,12 @@ $TR = [
         'field'          => 'Program Studi',
         'please_choose'  => 'Silahkan Pilih',
 
-        'back'           => 'kembali',
+        'back'           => 'Kembali',
         'save'           => 'Simpan',
+
+        'info_password'  => 'Untuk mengubah password, gunakan tombol',
+        'info_password2' => 'di halaman Daftar Pengguna.',
+        'change_password'=> 'Ubah Password',
     ],
     'en' => [
         'dashboard'      => 'Dashboard',
@@ -52,6 +56,10 @@ $TR = [
 
         'back'           => 'Back',
         'save'           => 'Save',
+
+        'info_password'  => 'To change the password, use the',
+        'info_password2' => 'button on the User List page.',
+        'change_password'=> 'Change Password',
     ],
 ];
 
@@ -67,11 +75,11 @@ $t = static function (string $key) use ($TR, $lang): string {
 <?= $this->section('content') ?>
 <section class="section">
     <div class="section-header">
-        <a href="<?= site_url('dosen'); ?>" class="btn btn-dark mr-2"><i class="fas fa-arrow-left"></i></a>
+        <a href="<?= site_url('pengguna'); ?>" class="btn btn-dark mr-2"><i class="fas fa-arrow-left"></i></a>
         <h1><?= esc($title); ?></h1>
         <div class="section-header-breadcrumb">
             <div class="breadcrumb-item"><a href="<?= site_url('dashboard'); ?>"><?= esc($t('dashboard')) ?></a></div>
-            <div class="breadcrumb-item active"><a href="<?= site_url('dosen'); ?>"><?= esc($t('lecturer_data')) ?></a></div>
+            <div class="breadcrumb-item active"><a href="<?= site_url('pengguna'); ?>"><?= esc($t('lecturer_data')) ?></a></div>
             <div class="breadcrumb-item"><?= esc($title); ?></div>
         </div>
     </div>
@@ -81,7 +89,7 @@ $t = static function (string $key) use ($TR, $lang): string {
             <div class="col-12 col-md-6 col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        <form action="<?= site_url('dosen/' . $dosen->user_id); ?>" method="POST" autocomplete="off">
+                        <form action="<?= site_url('pengguna/' . $dosen->user_id); ?>" method="POST" autocomplete="off">
                             <?= csrf_field(); ?>
                             <input type="hidden" name="_method" value="PATCH">
 
@@ -181,8 +189,18 @@ $t = static function (string $key) use ($TR, $lang): string {
                                 </select>
                             </div>
 
+                            <!-- Info ubah password -->
+                            <div class="alert alert-info d-flex align-items-center" role="alert" style="gap: 8px;">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <span>
+                                    <?= esc($t('info_password')); ?>
+                                    <span class="badge badge-info"><i class="fas fa-key"></i> <?= esc($t('change_password')); ?></span>
+                                    <?= esc($t('info_password2')); ?>
+                                </span>
+                            </div>
+
                             <div class="text-right">
-                                <a href="<?= site_url('dosen'); ?>" class="btn btn-dark"><?= esc($t('back')) ?></a>
+                                <a href="<?= site_url('pengguna'); ?>" class="btn btn-dark"><?= esc($t('back')) ?></a>
                                 <button type="submit" class="btn btn-primary"><?= esc($t('save')) ?></button>
                             </div>
                         </form>

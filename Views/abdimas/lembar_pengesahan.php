@@ -162,9 +162,54 @@ $labels = $l[$lang];
             <td> : <?= $jumlah_anggota ?> <?= $labels['terlampir'] ?></td>
         </tr>
 
+<<<<<<< HEAD
         <?php foreach ($anggota as $a) : ?>
             <?php if ($a->user_id != ($abdimas->ketua_id ?? null)) : ?>
                 <?php if ($a->user_id === null) : ?>
+=======
+<?php foreach ($anggota as $a) : ?>
+    <?php if ($a->user_id != ($abdimas->ketua_id ?? null)) : ?>
+        <tr>
+            <td style="padding-left: 20px;">
+                Nama Anggota<?= (isset($a->is_koordinator) && $a->is_koordinator ? ' (Koord)' : '') ?>
+            </td>
+            <td>    : <?= $a->user_name ?? '-' ?></td>
+        </tr>
+        <tr>
+    <td style="padding-left: 20px;">NIDN / Bidang Keahlian</td>
+    <td>: <?= $a->nidn ?? '-' ?> / <?= esc($a->jurusan_name ?? '-') ?></td>
+
+</tr>
+
+    <?php endif; ?>
+<?php endforeach; ?>
+
+<br>
+        <tr>
+            <td>5. LOKASI KEGIATAN / MITRA</td>
+        </tr>
+        <tr>
+            <td>   Wilayah Mitra</td>
+            <td>  : <?= $mitra->alamat ?? '-' ?></td>
+        </tr>
+        <tr>
+            <td>   Kabupaten/Kota</td>
+            <td>  : <?= $mitra->kota_name ?? '-' ?></td>
+        </tr>
+        <tr><td>   Provinsi</td>
+            <td>  : <?= $mitra->provinsi_name ?? '-' ?></td>
+        </tr>
+        <tr>
+            <td>   Jarak PT ke Lokasi Mitra</td>
+            <td>  : <?= $abdimas->jarak_kampus ?? '-' ?></td>
+        </tr><br>
+        <tr>
+    <td>6. Luaran</td>
+    <td colspan="4">
+        <?php if (!empty($luaran)): ?>
+            <table>
+                <?php foreach ($luaran as $index => $item): ?>
+>>>>>>> 55c0835 (refactor: update code)
                     <tr>
                         <td style="padding-left: 20px;"><?= $labels['tidak_ada_anggota'] ?></td>
                         <td></td>

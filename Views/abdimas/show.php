@@ -621,6 +621,23 @@ if (!function_exists('formatTanggalID')) {
                                                         </div>
                                                     </td>
                                                 </tr>
+                                                <tr>
+                                                    <td class="col-3 font-weight-bold" style="border: 1px solid">
+                                                        SPM
+                                                    </td>
+                                                    <td class="col-9" style="border: 1px solid">
+                                                        <div class="form-group m-2 text-break">
+                                                            <?php $spm = $abdimas->spm ?? null; ?>
+                                                            <?php if (!empty($spm)) : ?>
+                                                                <a href="<?= base_url('berkas/spm/' . $spm); ?>" target="_blank" class="btn btn-sm btn-primary">
+                                                                    Lihat SPM
+                                                                </a>
+                                                            <?php else : ?>
+                                                                <span class="text-muted">Belum ada file SPM</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -650,6 +667,36 @@ if (!function_exists('formatTanggalID')) {
                                     <div class="mb-3">
                                         <table class="table table-bordered">
                                             <tbody>
+<<<<<<< HEAD
+=======
+                                            <tr>
+                                                <td class="col-2 font-weight-bold" style="border: 1px solid">Nama Ketua Tim PKM</td>
+                                                <td class="col-5" style="border: 1px solid">
+                                                    <?php foreach ($tags as $ds => $v_tags) : ?>
+                                                        <?php if ($abdimas->laporan_id == $v_tags->laporan_id && $v_tags->anggota_id == $abdimas->ketua_id) : ?>
+                                                            <input type="hidden" name="ketua_id" id="ketua_id" class="form-control"
+                                                                placeholder="<?= $v_tags->user_name; ?>" readonly autofocus>
+                                                            <?= $v_tags->user_name; ?> <br>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                </td>
+                                            
+                                                <td class="font-weight-bold" style="border: 1px solid">Tanggal Pelaksanaan</td>
+                                                <td style="border: 1px solid">
+                                                    <?php if (!empty($abdimas->tanggal_kegiatan)) : ?>
+                                                        <?php
+                                                            // Format tanggal hanya jika ada nilai
+                                                            $formattedDate = date('l, d F Y', strtotime($abdimas->tanggal_kegiatan));
+                                                            $storedDate = date('Y-m-d', strtotime($abdimas->tanggal_kegiatan));
+                                                        ?>
+                                                        <input type="hidden" name="tanggal_kegiatan" id="tanggal_kegiatan" value="<?= $storedDate; ?>">
+                                                        <?= $formattedDate; ?>
+                                                    <?php else : ?>
+                                                        <span class="text-danger">Belum ada tanggal kegiatan</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+>>>>>>> 55c0835 (refactor: update code)
                                                 <tr>
                                                     <td class="col-2 font-weight-bold" style="border: 1px solid"><?= $t('teamLeaderName'); ?></td>
                                                     <td class="col-5" style="border: 1px solid">
@@ -952,6 +999,7 @@ if (!function_exists('formatTanggalID')) {
                                                 </td>
                                             </tr>
                                             <tr>
+<<<<<<< HEAD
                                                 <td colspan="6" style="border: 1px solid; width:150px;">
                                                     <label class="font-weight-bold"><?= $t('suggestionsInput'); ?></label><br>
                                                     <?php if ($abdimas->saran_masukan == null) : ?>
@@ -959,6 +1007,35 @@ if (!function_exists('formatTanggalID')) {
                                                     <?php else : ?>
                                                         <p class="text-break"><?= esc($abdimas->saran_masukan); ?></p>
                                                         <textarea name="saran_masukan" id="saran_masukan" class="form-control" hidden readonly><?= esc($rekapan->saran_masukan); ?></textarea>
+=======
+                                                <td style="border: 1px solid; width: 20%;" class="font-weight-bold">
+                                                    SKM
+                                                </td>
+                                                <td style="border: 1px solid; width: 80%;">
+                                                    <div class="m-2 text-break">
+                                                        <?php $skm = $abdimas->skm ?? null; ?>
+                                                        <?php if (!empty($skm)) : ?>
+                                                            <a href="<?= base_url('berkas/skm/' . $skm); ?>" target="_blank" class="btn btn-sm btn-primary">
+                                                                Lihat SKM
+                                                            </a>
+                                                        <?php else : ?>
+                                                            <span class="text-muted">Belum ada file SKM</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="6" style="border: 1px solid; width:150px;">
+                                                    <label class="font-weight-bold">Saran & Masukan:</label><br>
+                                                    
+                                                    <?php if (isset($rekapan) && !empty($rekapan->saran_masukan)) : ?>
+                                                        <p class="text-break"><?= esc($rekapan->saran_masukan); ?></p>
+                                                        <textarea name="saran_masukan" id="saran_masukan" class="form-control" hidden readonly>
+                                                            <?= esc($rekapan->saran_masukan); ?>
+                                                        </textarea>
+                                                    <?php else : ?>
+                                                        <span class="text-danger">Belum ada Saran dan Masukan</span>
+>>>>>>> 55c0835 (refactor: update code)
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>

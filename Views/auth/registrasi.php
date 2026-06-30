@@ -51,10 +51,6 @@ $T = [
         'label_pass_conf' => 'Konfirmasi Password',
         'ph_pass_conf' => 'Ulangi password',
 
-        'label_captcha' => 'Keamanan: Berapa hasil',
-        'ph_captcha'    => 'Masukkan hasil penjumlahan',
-        'inv_captcha'   => 'Mohon isi jawaban keamanan',
-
         'label_role' => 'Mendaftar sebagai?',
         'role_dosen' => 'Dosen',
         'role_mitra' => 'Mitra',
@@ -118,10 +114,6 @@ $T = [
         'label_pass_conf' => 'Confirm Password',
         'ph_pass_conf' => 'Re-enter password',
 
-        'label_captcha' => 'Security: What is the result of',
-        'ph_captcha'    => 'Enter the sum',
-        'inv_captcha'   => 'Please fill in the security answer',
-
         'label_role' => 'Register as?',
         'role_dosen' => 'Lecturer',
         'role_mitra' => 'Partner',
@@ -173,337 +165,712 @@ function L(string $key): string
 
 <?= $this->section('content') ?>
 
-<!-- Tailwind CSS Registration Implementation -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-    tailwind.config = {
-        corePlugins: {
-            preflight: false,
+<!-- Custom CSS for Enhanced Registration Page -->
+<style>
+    .registration-container {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
-</script>
 
-<!-- Toastify CSS & JS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    .card-primary {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-    .font-nunito { font-family: 'Nunito', sans-serif; }
-    
-    .tw-input {
-        appearance: none; background-color: #f3f4f6; border: 1px solid transparent; border-radius: 0.5rem;
-        padding: 0.75rem 1rem; font-size: 0.875rem; color: #374151; width: 100%; outline: none; transition: all 0.2s; box-sizing: border-box;
+    .card-primary:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
     }
-    .tw-input:focus { background-color: #ffffff; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
-    .tw-input.is-invalid { border-color: #ef4444; background-color: #fef2f2; }
-    .tw-input.is-invalid:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3); }
-    
-    .tw-btn { appearance: none; border: none; outline: none; cursor: pointer; font-family: inherit; }
-    
-    /* Custom Radio Buttons for Role */
-    .tw-radio-label {
-        display: flex; align-items: center; justify-content: center; padding: 1rem; border-radius: 0.5rem;
-        background-color: #f3f4f6; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.875rem; color: #4b5563;
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border: none;
     }
-    .tw-radio-input:checked + .tw-radio-label {
-        background-color: #ebf5ff; border-color: #3b82f6; color: #1d4ed8;
+
+    .card-header h4 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
-    .tw-radio-input { display: none; }
+
+    .info-badge {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 10px rgba(240, 147, 251, 0.3);
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe5a1 100%);
+        border: none;
+        border-radius: 12px;
+        border-left: 4px solid #ffc107;
+        animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+        border: none;
+        border-radius: 12px;
+        border-left: 4px solid #dc3545;
+        animation: shake 0.5s ease-out;
+    }
+
+    @keyframes shake {
+
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-10px);
+        }
+
+        75% {
+            transform: translateX(10px);
+        }
+    }
+
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e0e6ed;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        height: 48px;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .form-control.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .input-group-append .btn {
+        height: 48px;
+        border: 2px solid #e0e6ed;
+        border-left: none;
+    }
+
+    .input-group .form-control {
+        border-right: none;
+        border-radius: 10px 0 0 10px !important;
+    }
+
+    .input-group-append .btn:hover {
+        background-color: #f8f9fa;
+        border-color: #667eea;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        animation: fadeIn 0.5s ease-out backwards;
+    }
+
+    .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .selectgroup-item {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .selectgroup-button {
+        border-radius: 10px;
+        padding: 15px 20px;
+        border: 2px solid #e0e6ed;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 56px;
+        font-size: 1rem;
+    }
+
+    .selectgroup-button i {
+        margin-right: 8px;
+    }
+
+    .selectgroup-input:checked+.selectgroup-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .selectgroup-button:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary:before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-primary:hover:before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(-1px);
+    }
+
+    .custom-control-label {
+        cursor: pointer;
+        user-select: none;
+        padding-left: 5px;
+    }
+
+    .custom-control-input:checked~.custom-control-label::before {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    .instruction-item {
+        padding: 8px 0;
+        border-left: 3px solid transparent;
+        padding-left: 10px;
+        margin-left: -10px;
+        transition: all 0.3s ease;
+    }
+
+    .instruction-item:hover {
+        border-left-color: #667eea;
+        padding-left: 15px;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .password-strength-indicator {
+        margin-top: 10px;
+    }
+
+    .footer-copyright {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .text-primary-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }
+
+    /* Tooltip styling */
+    .info-icon {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        background: #667eea;
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 18px;
+        font-size: 12px;
+        cursor: help;
+        margin-left: 5px;
+        transition: transform 0.3s ease;
+    }
+
+    .info-icon:hover {
+        transform: scale(1.2) rotate(180deg);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-header h4 {
+            font-size: 1.2rem;
+        }
+
+        .btn-primary {
+            font-size: 1rem;
+            padding: 12px;
+        }
+    }
 </style>
 
-<section class="fixed inset-0 z-[9999] overflow-y-auto bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-200 py-10 px-4 font-nunito">
-    <div class="relative w-full max-w-2xl mx-auto mt-10 mb-10">
-        <!-- Floating Logo -->
-        <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10">
-            <div class="bg-white p-1 rounded-full shadow-md border-4 border-white">
-                <img src="<?= base_url('template/assets/img/logo-gunadarma.png') ?>" alt="Logo" class="w-20 h-20 rounded-full object-contain">
-            </div>
-        </div>
+<section class="section">
+    <div class="container mt-5 registration-container">
+        <div class="row">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-8 offset-lg-2 col-xl-8 offset-xl-2">
 
-        <div class="bg-[#f8f9fa] rounded-xl shadow-2xl overflow-hidden pt-14 pb-2 relative">
-            <div class="px-6 sm:px-10 pb-6">
-                <!-- Alerts handled via Toastify JS below -->
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger alert-dismissible show fade">
+                        <div class="alert-body">
+                            <button class="close" data-dismiss="alert">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <strong><i class="fas fa-exclamation-triangle"></i> <?= L('error_title') ?></strong>
+                            <p class="mb-0 mt-2"><?= session()->getFlashdata('error'); ?></p>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded shadow-sm text-sm text-yellow-800">
-                    <p class="font-bold mb-2"><i class="fas fa-info-circle mr-1"></i> <?= L('important_badge') ?></p>
-                    <div class="space-y-1">
-                        <p><?= L('inst_1') ?></p>
-                        <p><?= L('inst_2') ?></p>
-                        <p><?= L('inst_3') ?></p>
-                        <p><?= L('inst_4') ?></p>
-                        <p><?= L('inst_5') ?></p>
-                        <p><?= L('inst_6') ?></p>
-                        <p><?= L('inst_7') ?></p>
+                <div class="card card-primary">
+                    <div class="card-header mb-0">
+                        <h4><i class="fas fa-user-plus"></i> <?= L('page_title') ?></h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="alert alert-warning">
+                            <div class="info-badge">
+                                <i class="fas fa-info-circle"></i> <?= L('important_badge') ?>
+                            </div>
+                            <p class="text-small text-dark mb-2" style="line-height: 1.8;">
+                                <span class="instruction-item d-block"><?= L('inst_1') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_2') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_3') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_4') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_5') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_6') ?></span>
+                                <span class="instruction-item d-block"><?= L('inst_7') ?></span>
+                            </p>
+                        </div>
+
+                        <form method="POST" action="<?= site_url('auth/registrasiProcess'); ?>" autocomplete="off" id="registrationForm">
+                            <?= csrf_field(); ?>
+
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label for="nidn" class="d-block">
+                                        <i class="fas fa-id-card"></i> <?= L('label_nidn') ?>
+                                        <small class="text-danger">*</small>
+                                    </label>
+                                    <div class="mb-2">
+                                        <span class="badge badge-info badge-pill"><?= L('badge_mitra') ?></span>
+                                        <span class="badge badge-primary badge-pill ml-1"><?= L('badge_dosen') ?></span>
+                                    </div>
+                                    <input id="nidn" type="text" name="nidn" value="<?= set_value('nidn'); ?>"
+                                        class="form-control <?= (session('validation') && session('validation')->hasError('nidn')) ? 'is-invalid' : ''; ?>"
+                                        placeholder="<?= L('ph_nidn') ?>" autofocus>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('nidn')): ?>
+                                            <?= session('validation')->getError('nidn'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="sinta_id" class="d-block">
+                                        <i class="fas fa-fingerprint"></i> <?= L('label_sinta') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <input id="sinta_id" type="text" value="<?= set_value('sinta_id'); ?>"
+                                        class="form-control <?= (session('validation') && session('validation')->hasError('sinta_id')) ? 'is-invalid' : ''; ?>"
+                                        name="sinta_id" placeholder="<?= L('ph_sinta') ?>">
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> <?= L('sinta_help') ?>
+                                    </small>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('sinta_id')): ?>
+                                            <?= session('validation')->getError('sinta_id'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="user_name">
+                                    <i class="fas fa-user"></i> <?= L('label_name') ?> <small class="text-danger">*</small>
+                                </label>
+                                <input id="user_name" type="text" value="<?= set_value('user_name'); ?>"
+                                    class="form-control <?= (session('validation') && session('validation')->hasError('user_name')) ? 'is-invalid' : ''; ?>"
+                                    name="user_name" placeholder="<?= L('ph_name') ?>">
+                                <div class="invalid-feedback">
+                                    <?php if (session('validation') && session('validation')->hasError('user_name')): ?>
+                                        <?= session('validation')->getError('user_name'); ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">
+                                    <i class="fas fa-envelope"></i> <?= L('label_email') ?> <small class="text-danger">*</small>
+                                </label>
+                                <input id="email" type="email" value="<?= set_value('email'); ?>"
+                                    class="form-control <?= (session('validation') && session('validation')->hasError('email')) ? 'is-invalid' : ''; ?>"
+                                    name="email" placeholder="<?= L('ph_email') ?>">
+                                <div class="invalid-feedback">
+                                    <?php if (session('validation') && session('validation')->hasError('email')): ?>
+                                        <?= session('validation')->getError('email'); ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label for="password" class="d-block">
+                                        <i class="fas fa-lock"></i> <?= L('label_pass') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <small class="badge badge-primary mb-2 d-block" style="width: fit-content;">
+                                        <?= L('pass_rule') ?>
+                                    </small>
+                                    <div class="input-group">
+                                        <input id="password" type="password"
+                                            class="form-control pwstrength <?= (session('validation') && session('validation')->hasError('password')) ? 'is-invalid' : ''; ?>"
+                                            data-indicator="pwindicator" name="password" placeholder="<?= L('ph_pass') ?>">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-radius: 0 10px 10px 0;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            <?php if (session('validation') && session('validation')->hasError('password')): ?>
+                                                <?= session('validation')->getError('password'); ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div id="pwindicator" class="pwindicator">
+                                        <div class="bar"></div>
+                                        <div class="label"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="password_konfirmasi" class="d-block">
+                                        <i class="fas fa-lock"></i> <?= L('label_pass_conf') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <small class="badge badge-transparent mb-2 d-block" style="visibility: hidden;">Min. 6 Karakter (Huruf+Angka+Simbol)</small>
+                                    <div class="input-group">
+                                        <input id="password_konfirmasi" type="password"
+                                            class="form-control <?= (session('validation') && session('validation')->hasError('password_konfirmasi')) ? 'is-invalid' : ''; ?>"
+                                            name="password_konfirmasi" placeholder="<?= L('ph_pass_conf') ?>">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirm" style="border-radius: 0 10px 10px 0;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            <?php if (session('validation') && session('validation')->hasError('password_konfirmasi')): ?>
+                                                <?= session('validation')->getError('password_konfirmasi'); ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label d-block mb-3">
+                                    <i class="fas fa-user-tag"></i> <?= L('label_role') ?> <small class="text-danger">*</small>
+                                </label>
+                                <div class="selectgroup w-100">
+                                    <label class="selectgroup-item mb-0">
+                                        <input type="radio" name="role_id" value="4" class="selectgroup-input" id="role_dosen">
+                                        <span class="selectgroup-button">
+                                            <i class="fas fa-chalkboard-teacher"></i> <?= L('role_dosen') ?>
+                                        </span>
+                                    </label>
+                                    <label class="selectgroup-item mb-0">
+                                        <input type="radio" name="role_id" value="5" class="selectgroup-input" id="role_mitra">
+                                        <span class="selectgroup-button">
+                                            <i class="fas fa-handshake"></i> <?= L('role_mitra') ?>
+                                        </span>
+                                    </label>
+                                </div>
+                                <?php if (session('validation') && session('validation')->hasError('role_id')): ?>
+                                    <small class="text-danger d-block mt-2"><?= session('validation')->getError('role_id'); ?></small>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Role-specific fields -->
+                            <div id="dosen-fields" class="role-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="jurusan_id">
+                                        <i class="fas fa-graduation-cap"></i> <?= L('label_field') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <select id="jurusan_id" name="jurusan_id" class="form-control <?= (session('validation') && session('validation')->hasError('jurusan_id')) ? 'is-invalid' : ''; ?>">
+                                        <option value=""><?= L('opt_field') ?></option>
+                                        <?php foreach ($jurusan as $j): ?>
+                                            <option value="<?= $j->jurusan_id; ?>" <?= set_value('jurusan_id') == $j->jurusan_id ? 'selected' : ''; ?>>
+                                                <?= $j->fakultas_name; ?> - <?= $j->jurusan_name; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('jurusan_id')): ?>
+                                            <?= session('validation')->getError('jurusan_id'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="mitra-fields" class="role-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="kontak">
+                                        <i class="fas fa-phone"></i> <?= L('label_contact') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <input id="kontak" type="text" value="<?= set_value('kontak'); ?>"
+                                        class="form-control <?= (session('validation') && session('validation')->hasError('kontak')) ? 'is-invalid' : ''; ?>"
+                                        name="kontak" placeholder="<?= L('ph_contact') ?>">
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('kontak')): ?>
+                                            <?= session('validation')->getError('kontak'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="kota_id">
+                                        <i class="fas fa-map-marker-alt"></i> <?= L('label_city') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <select id="kota_id" name="kota_id" class="form-control <?= (session('validation') && session('validation')->hasError('kota_id')) ? 'is-invalid' : ''; ?>">
+                                        <option value=""><?= L('opt_city') ?></option>
+                                        <?php foreach ($kota as $k): ?>
+                                            <option value="<?= $k->kota_id; ?>" <?= set_value('kota_id') == $k->kota_id ? 'selected' : ''; ?>>
+                                                <?= $k->provinsi_name; ?> - <?= $k->kota_name; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('kota_id')): ?>
+                                            <?= session('validation')->getError('kota_id'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="alamat">
+                                        <i class="fas fa-home"></i> <?= L('label_address') ?> <small class="text-danger">*</small>
+                                    </label>
+                                    <textarea id="alamat" class="form-control <?= (session('validation') && session('validation')->hasError('alamat')) ? 'is-invalid' : ''; ?>"
+                                        name="alamat" rows="3" placeholder="<?= L('ph_address') ?>"><?= set_value('alamat'); ?></textarea>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('alamat')): ?>
+                                            <?= session('validation')->getError('alamat'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="syarat"
+                                        class="custom-control-input <?= (session('validation') && session('validation')->hasError('syarat')) ? 'is-invalid' : ''; ?>"
+                                        id="syarat">
+                                    <label class="custom-control-label" for="syarat">
+                                        <?= L('agree_terms') ?>
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        <?php if (session('validation') && session('validation')->hasError('syarat')): ?>
+                                            <?= session('validation')->getError('syarat'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-lg btn-block" tabindex="4">
+                                    <i class="fas fa-user-plus"></i> <?= L('btn_register') ?>
+                                </button>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <p class="text-muted">
+                                    <?= L('already_account') ?> <a href="<?= site_url('login'); ?>" class="font-weight-bold text-primary-gradient"><?= L('login_here') ?></a>
+                                </p>
+                                <p class="text-muted">
+                                    <a href="<?= site_url(); ?>" class="font-weight-bold text-primary-gradient">
+                                        <i class="fas fa-home"></i> <?= L('back_home') ?>
+                                    </a>
+                                </p>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
-                <form method="POST" action="<?= site_url('auth/registrasiProcess'); ?>" autocomplete="off" id="registrationForm">
-                    <?= csrf_field(); ?>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <!-- NIDN -->
-                        <div>
-                            <label for="nidn" class="block text-[13px] font-bold text-gray-800 mb-2">
-                                <?= L('label_nidn') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <input id="nidn" type="text" name="nidn" value="<?= set_value('nidn'); ?>" class="tw-input <?= (session('validation') && session('validation')->hasError('nidn')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_nidn') ?>" autofocus>
-                            <div class="mt-2 flex gap-2 flex-wrap">
-                                <span class="inline-block text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-normal"><?= L('badge_mitra') ?></span>
-                                <span class="inline-block text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-normal"><?= L('badge_dosen') ?></span>
-                            </div>
-                            <?php if (session('validation') && session('validation')->hasError('nidn')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('nidn'); ?></p>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- SINTA ID -->
-                        <div>
-                            <label for="sinta_id" class="block text-[13px] font-bold text-gray-800 mb-2">
-                                <?= L('label_sinta') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <input id="sinta_id" type="text" name="sinta_id" value="<?= set_value('sinta_id'); ?>" class="tw-input <?= (session('validation') && session('validation')->hasError('sinta_id')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_sinta') ?>">
-                            <p class="text-gray-500 text-[11px] mt-1"><i class="fas fa-info-circle"></i> <?= L('sinta_help') ?></p>
-                            <?php if (session('validation') && session('validation')->hasError('sinta_id')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('sinta_id'); ?></p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="mb-5">
-                        <label for="user_name" class="block text-[13px] font-bold text-gray-800 mb-1">
-                            <?= L('label_name') ?> <span class="text-red-500">*</span>
-                        </label>
-                        <input id="user_name" type="text" name="user_name" value="<?= set_value('user_name'); ?>" class="tw-input <?= (session('validation') && session('validation')->hasError('user_name')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_name') ?>">
-                        <?php if (session('validation') && session('validation')->hasError('user_name')): ?>
-                            <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('user_name'); ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="mb-5">
-                        <label for="email" class="block text-[13px] font-bold text-gray-800 mb-1">
-                            <?= L('label_email') ?> <span class="text-red-500">*</span>
-                        </label>
-                        <input id="email" type="email" name="email" value="<?= set_value('email'); ?>" class="tw-input <?= (session('validation') && session('validation')->hasError('email')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_email') ?>">
-                        <?php if (session('validation') && session('validation')->hasError('email')): ?>
-                            <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('email'); ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <!-- Password -->
-                        <div>
-                            <label for="password" class="block text-[13px] font-bold text-gray-800 mb-2">
-                                <?= L('label_pass') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input id="password" name="password" type="password" class="tw-input pr-10 <?= (session('validation') && session('validation')->hasError('password')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_pass') ?>">
-                                <button type="button" class="tw-btn absolute right-3 top-3 text-gray-400 hover:text-gray-600 bg-transparent" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <span class="inline-block text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded mt-2 font-normal"><?= L('pass_rule') ?></span>
-                            <?php if (session('validation') && session('validation')->hasError('password')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('password'); ?></p>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Confirm Password -->
-                        <div>
-                            <label for="password_konfirmasi" class="block text-[13px] font-bold text-gray-800 mb-2">
-                                <?= L('label_pass_conf') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input id="password_konfirmasi" name="password_konfirmasi" type="password" class="tw-input pr-10 <?= (session('validation') && session('validation')->hasError('password_konfirmasi')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_pass_conf') ?>">
-                                <button type="button" class="tw-btn absolute right-3 top-3 text-gray-400 hover:text-gray-600 bg-transparent" id="togglePasswordConfirm">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <?php if (session('validation') && session('validation')->hasError('password_konfirmasi')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('password_konfirmasi'); ?></p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <!-- Role Selection -->
-                    <div class="mb-5">
-                        <label class="block text-[13px] font-bold text-gray-800 mb-2">
-                            <?= L('label_role') ?> <span class="text-red-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="w-full">
-                                <input type="radio" name="role_id" value="4" class="tw-radio-input" id="role_dosen" <?= set_value('role_id') == '4' ? 'checked' : '' ?>>
-                                <div class="tw-radio-label"><i class="fas fa-chalkboard-teacher mr-2"></i> <?= L('role_dosen') ?></div>
-                            </label>
-                            <label class="w-full">
-                                <input type="radio" name="role_id" value="5" class="tw-radio-input" id="role_mitra" <?= set_value('role_id') == '5' ? 'checked' : '' ?>>
-                                <div class="tw-radio-label"><i class="fas fa-handshake mr-2"></i> <?= L('role_mitra') ?></div>
-                            </label>
-                        </div>
-                        <?php if (session('validation') && session('validation')->hasError('role_id')): ?>
-                            <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('role_id'); ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Dosen Fields -->
-                    <div id="dosen-fields" class="mb-5" style="display: none;">
-                        <label for="jurusan_id" class="block text-[13px] font-bold text-gray-800 mb-1">
-                            <?= L('label_field') ?> <span class="text-red-500">*</span>
-                        </label>
-                        <select id="jurusan_id" name="jurusan_id" class="tw-input <?= (session('validation') && session('validation')->hasError('jurusan_id')) ? 'is-invalid' : ''; ?>">
-                            <option value=""><?= L('opt_field') ?></option>
-                            <?php foreach ($jurusan as $j): ?>
-                                <option value="<?= $j->jurusan_id; ?>" <?= set_value('jurusan_id') == $j->jurusan_id ? 'selected' : ''; ?>>
-                                    <?= $j->fakultas_name; ?> - <?= $j->jurusan_name; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if (session('validation') && session('validation')->hasError('jurusan_id')): ?>
-                            <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('jurusan_id'); ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Mitra Fields -->
-                    <div id="mitra-fields" class="space-y-5 mb-5" style="display: none;">
-                        <div>
-                            <label for="kontak" class="block text-[13px] font-bold text-gray-800 mb-1">
-                                <?= L('label_contact') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <input id="kontak" type="text" name="kontak" value="<?= set_value('kontak'); ?>" class="tw-input <?= (session('validation') && session('validation')->hasError('kontak')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_contact') ?>">
-                            <?php if (session('validation') && session('validation')->hasError('kontak')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('kontak'); ?></p>
-                            <?php endif; ?>
-                        </div>
-                        <div>
-                            <label for="kota_id" class="block text-[13px] font-bold text-gray-800 mb-1">
-                                <?= L('label_city') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <select id="kota_id" name="kota_id" class="tw-input <?= (session('validation') && session('validation')->hasError('kota_id')) ? 'is-invalid' : ''; ?>">
-                                <option value=""><?= L('opt_city') ?></option>
-                                <?php foreach ($kota as $k): ?>
-                                    <option value="<?= $k->kota_id; ?>" <?= set_value('kota_id') == $k->kota_id ? 'selected' : ''; ?>>
-                                        <?= $k->provinsi_name; ?> - <?= $k->kota_name; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <?php if (session('validation') && session('validation')->hasError('kota_id')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('kota_id'); ?></p>
-                            <?php endif; ?>
-                        </div>
-                        <div>
-                            <label for="alamat" class="block text-[13px] font-bold text-gray-800 mb-1">
-                                <?= L('label_address') ?> <span class="text-red-500">*</span>
-                            </label>
-                            <textarea id="alamat" name="alamat" rows="3" class="tw-input <?= (session('validation') && session('validation')->hasError('alamat')) ? 'is-invalid' : ''; ?>" placeholder="<?= L('ph_address') ?>"><?= set_value('alamat'); ?></textarea>
-                            <?php if (session('validation') && session('validation')->hasError('alamat')): ?>
-                                <p class="text-red-500 text-xs mt-1 font-bold"><?= session('validation')->getError('alamat'); ?></p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <!-- Captcha -->
-                    <div class="mb-5">
-                        <label for="captcha" class="block text-[13px] font-bold text-gray-800 mb-2">
-                            <?= L('label_captcha') ?> <?= isset($captcha_num1) ? $captcha_num1 . ' + ' . $captcha_num2 . '?' : '?' ?> <span class="text-red-500">*</span>
-                        </label>
-                        <input id="captcha" name="captcha" type="number" class="tw-input" placeholder="<?= L('ph_captcha') ?>" required>
-                    </div>
-
-                    <!-- Syarat -->
-                    <div class="mb-6 flex items-start">
-                        <input type="checkbox" id="syarat" name="syarat" class="h-4 w-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
-                        <label for="syarat" class="ml-2 block text-[13px] font-bold text-gray-700 cursor-pointer">
-                            <?= L('agree_terms') ?>
-                        </label>
-                    </div>
-                    <?php if (session('validation') && session('validation')->hasError('syarat')): ?>
-                        <p class="text-red-500 text-xs -mt-5 mb-5 font-bold"><?= session('validation')->getError('syarat'); ?></p>
-                    <?php endif; ?>
-
-                    <button type="submit" class="tw-btn w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors duration-200 text-sm tracking-wide">
-                        <?= L('btn_register') ?>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Bottom Section -->
-            <div class="border-t border-gray-200 bg-[#f4f5f7] px-8 py-5 flex flex-col items-center gap-2 mt-2">
-                <a href="<?= site_url('login'); ?>" class="text-[13px] text-[#3b82f6] font-bold hover:underline">
-                    <?= L('already_account') ?> <?= L('login_here') ?>
-                </a>
-                <a href="<?= site_url(); ?>" class="text-[13px] text-[#3b82f6] font-bold hover:underline">
-                    <?= L('back_home') ?>
-                </a>
+                <div class="footer-copyright text-center">
+                    <p class="mb-0 text-muted">
+                        Copyright &copy; <?php echo date("Y"); ?> &mdash;
+                        <a href="#" class="font-weight-bold text-primary-gradient">LPM UG</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
+<!-- Enhanced JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Password toggles
-        const setupToggle = (btnId, inputId) => {
-            const btn = document.getElementById(btnId);
-            const input = document.getElementById(inputId);
-            if (btn && input) {
-                btn.addEventListener('click', function() {
-                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-                    input.setAttribute('type', type);
-                    this.querySelector('i').classList.toggle('fa-eye');
-                    this.querySelector('i').classList.toggle('fa-eye-slash');
-                });
-            }
-        };
-        setupToggle('togglePassword', 'password');
-        setupToggle('togglePasswordConfirm', 'password_konfirmasi');
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
 
-        // Role fields toggle
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+
+        const togglePasswordConfirm = document.getElementById('togglePasswordConfirm');
+        const passwordConfirm = document.getElementById('password_konfirmasi');
+
+        if (togglePasswordConfirm) {
+            togglePasswordConfirm.addEventListener('click', function() {
+                const type = passwordConfirm.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordConfirm.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+
+        // Role selection toggle
         const roleDosen = document.getElementById('role_dosen');
         const roleMitra = document.getElementById('role_mitra');
         const dosenFields = document.getElementById('dosen-fields');
         const mitraFields = document.getElementById('mitra-fields');
 
         function toggleFields() {
-            if (roleDosen && roleDosen.checked) {
+            if (roleDosen.checked) {
                 dosenFields.style.display = 'block';
                 mitraFields.style.display = 'none';
-            } else if (roleMitra && roleMitra.checked) {
+            } else if (roleMitra.checked) {
                 dosenFields.style.display = 'none';
                 mitraFields.style.display = 'block';
             } else {
-                if(dosenFields) dosenFields.style.display = 'none';
-                if(mitraFields) mitraFields.style.display = 'none';
+                dosenFields.style.display = 'none';
+                mitraFields.style.display = 'none';
             }
         }
 
-        if (roleDosen) roleDosen.addEventListener('change', toggleFields);
-        if (roleMitra) roleMitra.addEventListener('change', toggleFields);
-        toggleFields(); // Initial check
+        roleDosen.addEventListener('change', toggleFields);
+        roleMitra.addEventListener('change', toggleFields);
 
-        // Focus invalid
-        const invalidInputs = document.querySelectorAll('.is-invalid');
-        if (invalidInputs.length > 0) {
-            invalidInputs[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            invalidInputs[0].focus();
+        // Form submission animation
+        const form = document.getElementById('registrationForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <?= L('processing') ?>';
+                submitBtn.disabled = true;
+            });
         }
 
-        <?php if (session()->getFlashdata('error')): ?>
-            Toastify({
-                text: "<?= addslashes(strip_tags(session()->getFlashdata('error'))); ?>",
-                duration: 4000,
-                close: true,
-                gravity: "top",
-                position: "center",
-                style: {
-                    background: "linear-gradient(to right, #ef4444, #f87171)",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
-                    fontFamily: "'Nunito', sans-serif",
-                    fontWeight: "bold",
-                    color: "white"
-                }
-            }).showToast();
-        <?php endif; ?>
+        // Smooth scroll to error
+        const invalidInputs = document.querySelectorAll('.is-invalid');
+        if (invalidInputs.length > 0) {
+            invalidInputs[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            invalidInputs[0].focus();
+        }
     });
 </script>
 

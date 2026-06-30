@@ -243,6 +243,25 @@ $__ = function (string $key, ...$args) use ($I18N, $lang) {
                                                 </div>
                                             </div>
 
+                                            <div class="row mt-2">
+                                                <div class="col-md-12">
+                                                    <div class="card p-2">
+                                                        <b>Mahasiswa Terlibat: </b>
+                                                        <?php
+                                                        $mhs_list = [];
+                                                        if (isset($mahasiswa) && (is_array($mahasiswa) || is_object($mahasiswa))) {
+                                                            foreach ($mahasiswa as $mhs) {
+                                                                if ($v_abdimas->laporan_id == $mhs->laporan_id) {
+                                                                    $mhs_list[] = esc(ucwords(strtolower($mhs->mahasiswa_name))) . ' (' . esc($mhs->mahasiswa_npm) . ')';
+                                                                }
+                                                            }
+                                                        }
+                                                        echo !empty($mhs_list) ? implode(', ', $mhs_list) : '<span class="text-danger">Tidak ada mahasiswa</span>';
+                                                        ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="card p-2">
                                                 <b><?= $__('members'); ?> </b>
                                                 <?php

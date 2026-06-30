@@ -13,6 +13,7 @@ use App\Models\SubprogramModel;
 use App\Models\LuaranModel;
 use App\Models\PeriodeModel;
 use App\Models\PesanModel;
+use App\Models\MahasiswaModel;
 use Google\Cloud\Translate\V2\TranslateClient;
 
 class Monev extends ResourceController
@@ -28,6 +29,7 @@ class Monev extends ResourceController
         $this->luaran       = new LuaranModel();
         $this->periode      = new PeriodeModel();
         $this->pesan        = new PesanModel();
+        $this->mahasiswa    = new MahasiswaModel();
     }
 
     public function index()
@@ -47,6 +49,7 @@ class Monev extends ResourceController
         $data['mitra'] = $this->abdimas->getMitra();
         $data['anggota'] = $this->tags->getAnggota();
         $data['laporan'] = $this->abdimas->getAll();
+        $data['mahasiswa'] = $this->mahasiswa->findAll();
 
         return view('abdimas/index_monev', $data);
     }
@@ -82,7 +85,7 @@ class Monev extends ResourceController
         $data['title'] = 'Monitoring dan Evaluasi';
         $data['pesan'] = $this->pesan->getPesan();
 
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
 
         if (!$abdimas) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -167,7 +170,7 @@ class Monev extends ResourceController
         $data['title'] = 'Monitoring dan Evaluasi';
         $data['pesan'] = $this->pesan->getPesan();
 
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
 
         if (!$abdimas) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -202,7 +205,7 @@ class Monev extends ResourceController
 
     public function update($id = null)
     {
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
 
         $data = [
             'nt1'   => $this->request->getVar('nt1'),
@@ -291,7 +294,7 @@ class Monev extends ResourceController
 
     public function delete($id = null)
     {
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
         if ($abdimas) {
             $uploadPath = WRITEPATH . 'berkas/skm/';
 

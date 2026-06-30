@@ -40,7 +40,6 @@ class RekapanModel extends Model
         if ($laporan_id) {
             $builder->where('tbl_laporan.laporan_id', $laporan_id); // Batasi berdasarkan laporan_id
         }
-        $builder->limit(100); // Batasi hasil maksimal
         $query = $builder->get();
         return $query->getResult();
     }

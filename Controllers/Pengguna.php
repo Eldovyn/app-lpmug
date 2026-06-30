@@ -228,7 +228,6 @@ class Pengguna extends ResourceController
      */
     public function update($id = null)
     {
-        // $data = $this->request->getPost();
         $data = [
             'user_name' => $this->request->getVar('user_name'),
             'kontak'    => $this->request->getVar('kontak'),
@@ -236,22 +235,6 @@ class Pengguna extends ResourceController
             'role_id'   => $this->request->getVar('role_id'),
             'status'    => $this->request->getVar('status'),
         ];
-
-        $password = $this->request->getVar('password');
-        $password_confirm = $this->request->getVar('password_confirm');
-
-        $lang = $this->request->getCookie('lang') ?? 'id';
-        if (! in_array($lang, ['id', 'en'], true)) {
-            $lang = 'id';
-        }
-
-        if ((string)$password !== '' || (string)$password_confirm !== '') {
-            if ($password !== $password_confirm) {
-                $errorMsg = $lang === 'en' ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.';
-                return redirect()->back()->withInput()->with('error_password_confirm', $errorMsg);
-            }
-            $data['password'] = password_hash($password, PASSWORD_BCRYPT);
-        }
         $this->pengguna->update($id, $data);
         $lang = $this->request->getCookie('lang') ?? 'id';
         if (! in_array($lang, ['id', 'en'], true)) {
@@ -292,6 +275,45 @@ class Pengguna extends ResourceController
         if ($lang === 'en') {
             $message = service('translation')->translateCached('Data anda berhasil diupdate', 'id', 'en');
         }
+        return redirect()->to(site_url('pengguna'))->with('success', $message);
+    }
+
+    /**
+     * Update password pengguna (dipanggil dari modal di halaman list)
+     */
+    public function updatePassword($id = null)
+    {
+        helper('auth');
+        if (!in_array((int) userLogin()->role_id, [1, 2], true)) {
+            return redirect()->to(site_url('pengguna'))->with('error', 'Anda tidak memiliki akses untuk mengubah password.');
+        }
+
+        $pengguna = $this->pengguna->find($id);
+        if (!$pengguna) {
+            return redirect()->to(site_url('pengguna'))->with('error', 'Data pengguna tidak ditemukan.');
+        }
+
+        $newPassword     = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        if (empty($newPassword) || strlen($newPassword) < 6) {
+            return redirect()->back()->with('error', 'Password minimal 6 karakter.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->with('error', 'Password dan konfirmasi tidak cocok.');
+        }
+
+        $this->pengguna->update($id, [
+            'password' => password_hash($newPassword, PASSWORD_BCRYPT),
+        ]);
+
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        $name = esc($pengguna->user_name);
+        $message = ($lang === 'en')
+            ? 'Password for "' . $name . '" has been updated successfully.'
+            : 'Password pengguna "' . $name . '" berhasil diperbarui.';
+
         return redirect()->to(site_url('pengguna'))->with('success', $message);
     }
 

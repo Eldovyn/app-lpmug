@@ -475,6 +475,71 @@ $T = $I18N[$lang];
                                 </div>
                             <?php endif; ?>
 
+<<<<<<< HEAD
+=======
+<div class="section-body">
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="<?= site_url('abdimas'); ?>" method="POST" autocomplete="off">
+                        <?= csrf_field(); ?>
+                        <div class="form-group">
+                            <label>Pilih Periode<span class="text-danger">*</span></label>
+                            <select name="periode_id" id="periode_id" class="form-control select2" required>
+                                <option hidden disabled>&mdash;PILIH PERIODE&mdash;</option>
+                                <?php foreach ($periode as $mtr => $v_periode): ?>
+                                    <?php if($v_periode->info == 1): ?>
+                                        <option value="<?= $v_periode->periode_id; ?>" selected><?= $v_periode->periode_name; ?> <?= $v_periode->tahun_ajaran; ?></option>
+                                    <?php else :?>
+                                        <option disabled value="<?= $v_periode->periode_id; ?>"><?= $v_periode->periode_name; ?> <?= $v_periode->tahun_ajaran; ?> -||- Pendaftaran ditutup</option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="invalid-feedback">
+                                <?php if(session('validation') && session('validation')->hasError('periode_id')):?>
+                                    <?= session('validation')->getError('periode_id'); ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>NIDN<span class="text-danger">*</span></label>
+                                <input type="text" name="nidn" id="nidn" value="<?= userLogin()->nidn; ?>" class="form-control" disabled autofocus>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Nama Ketua<span class="text-danger">*</span></label>
+                                <input type="text" name="ketua_id" id="ketua_id" class="form-control" placeholder="<?= userLogin()->user_name; ?>" disabled autofocus>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>SINTA ID<span class="text-danger">*</span></label>
+                                <input type="text" name="sinta_id" id="sinta_id" value="<?= userLogin()->sinta_id; ?>" class="form-control" disabled autofocus>
+                            </div>
+                        </div>
+                        <select name="mitra_id[]" class="form-control select2" multiple required data-placeholder="—PILIH MITRA UMKM—">
+                            <?php foreach ($mitra as $v_mitra): ?>
+                                <?php if($v_mitra->role_id == 5): ?>
+                                    <option value="<?= $v_mitra->user_id; ?>"><?= $v_mitra->user_name; ?> - <?= $v_mitra->kota_name; ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                        
+                        <script>
+                        $(document).ready(function() {
+                            $('.select2').select2({
+                                placeholder: "—PILIH MITRA UMKM—",
+                                allowClear: true,
+                                width: '100%'
+                            });
+                        
+                            // Reset value supaya placeholder tidak muncul sebagai tag
+                            $('.select2').val(null).trigger('change');
+                        });
+                        </script>
+
+                  `     <div class="row">
+                          <div class="col-md-6">
+>>>>>>> 55c0835 (refactor: update code)
                             <div class="form-group">
                                 <label><?= $__('choosePeriod'); ?><span class="text-danger">*</span></label>
                                 <select name="periode_id" id="periode_id" class="form-control select2" required>
@@ -520,6 +585,7 @@ $T = $I18N[$lang];
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+<<<<<<< HEAD
 
                             <div class="row">
                                 <div class="col-md-6">
@@ -606,6 +672,76 @@ $T = $I18N[$lang];
                                 <select name="sumber_dana[]" id="sumber_dana" class="form-control select2" multiple required>
                                     <?php
                                     // VALUE tetap Indonesia (jangan ubah, agar backend aman)
+=======
+                          </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilih Topik - Program - Sub Program<span class="text-danger">*</span></label>
+                            <select name="subprogram_id[]" class="form-control select2" multiple required data-placeholder="—PILIH TOPIK - PROGRAM - SUB PROGRAM—">
+                                <?php foreach ($subprogram as $mtr => $v_subprogram): ?>
+                                    <option value="<?= $v_subprogram->subprogram_id; ?>"><?= $v_subprogram->topik_name; ?> -||- <?= $v_subprogram->program_name; ?> -||- <?= $v_subprogram->subprogram_name; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <script>
+                        $(document).ready(function() {
+                            $('.select2').select2({
+                                placeholder: "—PILIH TOPIK - PROGRAM - SUB PROGRAM—",
+                                allowClear: true,
+                                width: '100%'
+                            });
+                            // Reset value supaya placeholder tidak muncul sebagai tag
+                            $('.select2').val(null).trigger('change');
+                        });
+                        </script>
+                        <div class="form-group">
+                            <label>Pilih Beberapa Luaran<span class="text-danger">*</span> <span class="text-primary"><b>Note:</b> Dapat memilih <b>lebih dari 1 luaran</b></span></label>
+                            <select name="luaran_id[]" class="form-control select2" id="luaran_id" multiple required>
+                                <?php foreach ($luaran as $mtr => $v_luaran): ?>
+                                        <option value="<?= $v_luaran->luaran_id; ?>"><?= $v_luaran->luaran_name; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilih Tipe Kegiatan<span class="text-danger">*</span></label>
+                            <select name="tipe_kegiatan[]" class="form-control select2" multiple required data-placeholder="—PILIH TIPE KEGIATAN—">
+                                <option value="Perorangan">Perorangan</option>
+                                <option value="Kelompok">Kelompok</option>
+                            </select>
+                        </div>
+                        
+                        <script>
+                        $(document).ready(function() {
+                            $('.select2').select2({
+                                placeholder: "—PILIH TIPE KEGIATAN—",
+                                allowClear: true,
+                                width: '100%'
+                            });
+                            // Reset value supaya placeholder tidak muncul sebagai tag
+                            $('.select2').val(null).trigger('change');
+                        });
+                        </script>
+                        <div class="form-group">
+                            <label>Estimasi Pendanaan<span class="text-danger">*</span> <span class="text-primary"><b>Note:</b> Untuk Pendanaan Per Semester <b>(Contoh: 10000000 | tanpa "Rp" dan "." (titik) maupun simbol lainnya)</b></span></label>
+                            <input type="number" name="range_dana" id="range_dana" class="form-control" placeholder="Isi Estimasi Pendanaan Anda" required>
+                            <!--<select name="range_dana" class="form-control select2">-->
+                            <!--    <option selected disabled>&mdash;PILIH RANGE PENDANAAN&mdash;</option>-->
+                            <!--    <option value="< 1 JT">< 1 JT</option>-->
+                            <!--    <option value="1 JT - 5 JT">1 JT - 5 JT</option>-->
+                            <!--    <option value="6 JT - 15 JT">6 JT - 15 JT</option>-->
+                            <!--    <option value="16 JT - 25 JT">16 JT - 25 JT</option>-->
+                            <!--    <option value="26 JT - 35 JT">26 JT - 35 JT</option>-->
+                            <!--    <option value="36 JT - 50 JT">36 JT - 50 JT</option>-->
+                            <!--    <option value="> 50 JT">> 50 JT</option>-->
+                            <!--</select>-->
+                        </div>
+                        <div class="form-group">
+                            <label for="sumber_dana">Sumber Pendanaan <span class="text-danger">*</span></label>
+                            <span class="text-primary d-block mb-1"><b>Note:</b> Pilih satu atau lebih sumber utama dana kegiatan</span>
+                            <select name="sumber_dana[]" id="sumber_dana" class="form-control select2" multiple required>
+                                <?php 
+>>>>>>> 55c0835 (refactor: update code)
                                     $options = [
                                         'Internal (Iuran Anggota)',
                                         'Eksternal (Kemendikbud)',
@@ -708,6 +844,30 @@ $T = $I18N[$lang];
                                         </div>
                                     <?php endfor; ?>
                                 </div>
+<<<<<<< HEAD
+=======
+                            <?php endif; ?>
+                        </div>
+                        <div class="form-group">
+                            <label>Masukan <b>Ketua</b> dan <b>Anggota</b><span class="text-danger">*</span> <span class="text-primary"><b>Note:</b> Nama Ketua <b>WAJIB</b> dimasukan kedalam form anggota</span></label>
+                            <select name="anggota_id[]" class="form-control" id="anggota_id" multiple required>
+                                <?php foreach ($dosen as $ds => $v_dosen): ?>
+                                    <option value="<?= $v_dosen->user_id; ?>" <?= ($v_dosen->user_id == userLogin()->user_id) ? 'selected' : '' ?> ><?= $v_dosen->user_name; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <label><span class="text-primary">(Berlaku untuk tipe kegiatan <b>Perorangan / Kelompok</b>)</span></label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Upload SPM</label><span class="text-danger">*</span>
+                            <span class="text-primary"><b>Note:</b> Max File Size: 5 MB</span> |
+                            <span>Jika file anda melebihi Max Size, silakan kompres terlebih dahulu.
+                                Bisa menggunakan:
+                                <a class="badge badge-primary mb-1" target="_blank" href="https://www.ilovepdf.com/compress_pdf">Compress PDF Online</a>
+                            </span>
+                            <input type="file" name="spm" id="spm" class="form-control" autofocus>
+                        </div>
+>>>>>>> 55c0835 (refactor: update code)
 
                                 <button type="button" class="btn btn-success btn-sm mt-2" id="add_mahasiswa">
                                     <?= $__('addStudent'); ?>

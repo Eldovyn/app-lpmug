@@ -396,7 +396,20 @@ $t = static function (string $key) use ($TR, $lang): string {
                                             endforeach; ?><br><br>
 
                                             <b><?= esc($t('label_fund')); ?></b>
-                                            <?= 'Rp. ' . number_format((int) $v_abdimas->range_dana, 0, ',', '.'); ?>
+                                            <?= 'Rp. ' . number_format((int) $v_abdimas->range_dana, 0, ',', '.'); ?><br><br>
+
+                                            <b>Mahasiswa Terlibat:</b><br>
+                                            <?php
+                                            $mhs_list = [];
+                                            if (isset($mahasiswa) && (is_array($mahasiswa) || is_object($mahasiswa))) {
+                                                foreach ($mahasiswa as $mhs) {
+                                                    if ($v_abdimas->laporan_id == $mhs->laporan_id) {
+                                                        $mhs_list[] = esc(ucwords(strtolower($mhs->mahasiswa_name))) . ' (' . esc($mhs->mahasiswa_npm) . ')';
+                                                    }
+                                                }
+                                            }
+                                            echo !empty($mhs_list) ? implode('<br>', $mhs_list) : '<span class="text-danger">-</span>';
+                                            ?>
                                         </td>
 
                                         <td class="text-wrap">
@@ -452,7 +465,19 @@ $t = static function (string $key) use ($TR, $lang): string {
                         </tbody>
                     </table>
                 </div>
-
+                <?php
+                $total = $pager->getTotal();
+                $from  = $total > 0 ? (1 + (25 * ($page - 1))) : 0;
+                $to    = max(0, $no - 1);
+                ?>
+                <div class="mt-3">
+                    <div class="float-left">
+                        <i>Showing <?= $from; ?> to <?= $to; ?> of <?= $total; ?> entries</i>
+                    </div>
+                    <div class="float-right">
+                        <?= $pager->links('default', 'pagination'); ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

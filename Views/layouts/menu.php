@@ -30,6 +30,7 @@
         transition: width 0.3s;
     }
 
+<<<<<<< HEAD
     .main-sidebar #sidebar-wrapper {
         position: relative;
         height: 100%;
@@ -579,15 +580,9 @@ $t = static function (string $key) use ($TR, $lang): string {
                         <li><a class="nav-link<?= $isDataSemester && $semesterParam === '' ? ' active' : '' ?>" href="<?= site_url('data_semester'); ?>"><?= esc($t('status_all')) ?></a></li>
                         <?php
                         $periodeModel = new \App\Models\PeriodeModel();
-                        $allPeriodes = $periodeModel->getAllPeriodes();
-                        // OPTIMASI: Batasi maksimal 5 semester di sidebar agar dropdown tidak berat/panjang
-                        $recentPeriodes = array_slice($allPeriodes, 0, 5);
-                        foreach ($recentPeriodes as $p): ?>
+                        foreach ($periodeModel->getAllPeriodes() as $p): ?>
                             <li><a class="nav-link<?= $isDataSemester && $semesterParam === (string)$p->periode_id ? ' active' : '' ?>" href="<?= site_url('data_semester?semester=' . $p->periode_id); ?>"><?= esc($p->periode_name) ?> <?= esc($p->tahun_ajaran ?? '') ?></a></li>
                         <?php endforeach; ?>
-                        <?php if(count($allPeriodes) > 5): ?>
-                            <li><a class="nav-link" href="<?= site_url('data_semester'); ?>"><i>Lainnya (Pilih di Filter) &rarr;</i></a></li>
-                        <?php endif; ?>
                     </ul>
                 </li>
 
@@ -720,3 +715,18 @@ $t = static function (string $key) use ($TR, $lang): string {
         </ul>
     </aside>
 </div>
+=======
+<!-- Menu untuk Mitra LPM UG -->
+<?php if(userLogin()->role_id == 5): ?>
+<li class="menu-header">Menu Utama</li>
+<li><a class="nav-link" href="<?= site_url('dashboard'); ?>"><i class="fas fa-fire"></i> <span>Dashboard</span></a></li>
+<li><a class="nav-link" href="<?= site_url('profile_user_mitra/update/' . userLogin()->user_id); ?>"><i class="far fa-user"></i> <span>Profile saya</span></a></li>
+<li><a class="nav-link" href="<?= site_url('ubah_password_mitra/update/' . userLogin()->user_id); ?>"><i class="fas fa-cog"></i> <span>Ubah password</span></a></li>
+<li>
+    <a class="nav-link" href="<?= site_url('mitra/upload_spm/' . userLogin()->user_id); ?>">
+        <i class="fas fa-file-upload"></i> <span>Upload SPM</span>
+    </a>
+</li>
+
+<?php endif;?>
+>>>>>>> 55c0835 (refactor: update code)

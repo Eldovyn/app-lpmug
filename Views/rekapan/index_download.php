@@ -364,7 +364,8 @@ $t = function (string $key) use ($tr, $lang) {
                                                         '<br> <b>SINTA ID: </b>' . $v_tags->sinta_id . '<br><br>';
                                                     $seen[$v_tags->user_id] = true;
                                                 endif;
-                                            endforeach; ?>
+                                            endforeach;
+                                            ?>
                                         </td>
 
                                         <td class="text-wrap">
@@ -398,8 +399,21 @@ $t = function (string $key) use ($tr, $lang) {
                                                 endif;
                                             endforeach; ?><br><br>
 
-                                            <b><?= esc($t('funding')); ?></b>
-                                            <?= 'Rp. ' . number_format((int) $v_abdimas->range_dana, 0, ',', '.'); ?>
+                                            <b><?= esc($t('label_fund')); ?></b>
+                                            <?= 'Rp. ' . number_format((int) $v_abdimas->range_dana, 0, ',', '.'); ?><br><br>
+
+                                            <b>Mahasiswa Terlibat:</b><br>
+                                            <?php
+                                            $mhs_list = [];
+                                            if (isset($mahasiswa) && (is_array($mahasiswa) || is_object($mahasiswa))) {
+                                                foreach ($mahasiswa as $mhs) {
+                                                    if ($v_abdimas->laporan_id == $mhs->laporan_id) {
+                                                        $mhs_list[] = esc(ucwords(strtolower($mhs->mahasiswa_name))) . ' (' . esc($mhs->mahasiswa_npm) . ')';
+                                                    }
+                                                }
+                                            }
+                                            echo !empty($mhs_list) ? implode('<br>', $mhs_list) : '<span class="text-danger">-</span>';
+                                            ?>
                                         </td>
 
                                         <td class="text-wrap">

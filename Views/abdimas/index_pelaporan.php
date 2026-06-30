@@ -243,6 +243,26 @@ $t = function (string $key, array $vars = []) use ($tr, $lang) {
                                                     </div>
                                                 </div>
                                             </div>
+<<<<<<< HEAD
+
+                                            <div class="row mt-2">
+                                                <div class="col-md-12">
+                                                    <div class="card p-2">
+                                                        <b>Mahasiswa Terlibat: </b>
+                                                        <?php
+                                                        $mhs_list = [];
+                                                        if (isset($mahasiswa) && (is_array($mahasiswa) || is_object($mahasiswa))) {
+                                                            foreach ($mahasiswa as $mhs) {
+                                                                if ($v_abdimas->laporan_id == $mhs->laporan_id) {
+                                                                    $mhs_list[] = esc(ucwords(strtolower($mhs->mahasiswa_name))) . ' (' . esc($mhs->mahasiswa_npm) . ')';
+                                                                }
+                                                            }
+                                                        }
+                                                        echo !empty($mhs_list) ? implode(', ', $mhs_list) : '<span class="text-danger">Tidak ada mahasiswa</span>';
+                                                        ?>
+                                                    </div>
+                                                </div>
+                                            </div>
 
                                             <div class="card p-2">
                                                 <b><?= esc($t('anggota')); ?> : </b>
@@ -312,6 +332,105 @@ $t = function (string $key, array $vars = []) use ($tr, $lang) {
                                         </td>
                                     </tr>
                                 <?php endif; ?>
+=======
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="card p-2">
+                                                <b>Status:</b>
+                                                <?php if($v_abdimas->verifikasi == 0): ?>
+                                                    <span class='badge badge-primary'>PROSES</span>
+                                                <?php elseif($v_abdimas->verifikasi == 1): ?>
+                                                    <span class='badge badge-success'>DISETUJUI</span>
+                                                <?php elseif($v_abdimas->verifikasi == 2): ?>
+                                                    <span class='badge badge-warning text-dark'>REVISI</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="card p-2">
+                                                <b>Catatan Perbaikan: </b>
+                                                <?php if($v_abdimas->revisi == !null) :?>
+                                                    <?= $v_abdimas->revisi; ?>
+                                                <?php else :?>
+                                                    <span class="text-danger">Tidak ada catatan revisi</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card p-2">
+                                        <b>Anggota : </b>
+                                        <?php 
+                                        $seen = []; 
+                                        $counter = 1; 
+                                        $output = []; // Array untuk menyimpan hasil
+                                        
+                                        foreach ($tags as $key => $v_tags): 
+                                            if ($v_abdimas->laporan_id == $v_tags->laporan_id && !isset($seen[$v_tags->laporan_id])): 
+                                                if ($v_tags->anggota_id == $v_abdimas->ketua_id): 
+                                                    $output[] = "<div class='item'>{$counter}. " . ucwords(strtolower($v_tags->user_name)) . 
+                                                                " (<span class='text-danger'>Ketua</span>)<br> 
+                                                                <b>NIDN:</b> {$v_tags->nidn} <br> 
+                                                                <b>SINTA ID:</b> {$v_tags->sinta_id}</div>";
+                                                else: 
+                                                    $output[] = "<div class='item'>{$counter}. " . ucwords(strtolower($v_tags->user_name)) . 
+                                                                "<br> <b>NIDN:</b> {$v_tags->nidn} <br> 
+                                                                <b>SINTA ID:</b> {$v_tags->sinta_id}</div>";
+                                                endif;
+                                                
+                                                $seen[$v_mitra->user_id] = true; 
+                                                $counter++;
+                                            endif; 
+                                        endforeach;
+                                        ?>
+                                        
+                                        <!-- Tampilan dengan Flexbox -->
+                                        <style>
+                                            .container {
+                                                display: flex;
+                                                flex-wrap: wrap;
+                                                gap: 20px;
+                                            }
+                                            .item {
+                                                width: calc(25% - 20px); /* Membagi jadi 2 kolom */
+                                                background: #f8f9fa;
+                                                padding: 10px;
+                                                border: 1px solid #ddd;
+                                                border-radius: 5px;
+                                            }
+                                        </style>
+                                        
+                                        <div class="container">
+                                            <?= implode("\n", $output); ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <br>
+                                    
+                                </td>
+                                <td class="text-center">
+                                    <!-- <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#exampleModal"><i class="fas fa-eye"></i></a> -->
+                                    <a href="<?= site_url('abdimas/'.$v_abdimas->laporan_id); ?>" class="btn btn-dark btn-sm m-1 show-item" style="width:150px;">Lihat Laporan</a><br>
+                                    <a href="<?= site_url('pelaporan/'.$v_abdimas->laporan_id.'/edit'); ?>" class="btn btn-primary btn-sm" style="width:150px;">Edit Laporan</a><br>
+                                    <form action="<?= site_url('abdimas/'. $v_abdimas->laporan_id); ?>" method="POST" class="d-inline" id="del-<?= $v_abdimas->laporan_id; ?>">
+                                        <?= csrf_field(); ?>
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button class="btn btn-danger btn-sm m-1" style="width:150px;" data-confirm="Hapus data? | Apakah anda yakin?" data-confirm-yes="submitDel(<?= $v_abdimas->laporan_id; ?>)">
+                                            Hapus Laporan
+                                        </button>
+                                    </form><br>
+                                            <?php if ($v_abdimas->verifikasi == 1): ?>
+                                        <a href="<?= site_url('/abdimas/pdf/'.$v_abdimas->laporan_id); ?>" class="btn btn-success btn-sm" style="width:150px;">
+                                            Lembar Pengesahan
+                                        </a>
+                                        <?php endif; ?>
+                                        <a href="<?= site_url('abdimas/arsip/'.$v_abdimas->laporan_id); ?>" class="btn btn-warning btn-sm " style="width:150px;">Arsip Surat Abdimas</a>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+>>>>>>> 55c0835 (refactor: update code)
                             <?php endforeach; ?>
                         </tbody>
                     </table>

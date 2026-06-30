@@ -4,13 +4,80 @@
 // Language Support - ID/EN with Cookies
 $lang = $_COOKIE['lang'] ?? 'id';
 
-if (!function_exists('t')) {
-    function t($key, $lang = 'id')
-    {
-        return lang('Hibah.' . $key, [], $lang);
-    }
-}
+$translations = [
+    'id' => [
+        'title_tab' => 'Detail Hibah',
+        'title' => 'Detail Hibah',
+        'dashboard' => 'Dashboard',
+        'hibah_verification' => 'Verifikasi Hibah',
+        'detail' => 'Detail',
+        'hibah_details' => 'Detail Hibah',
+        'judul_hibah' => 'Judul Hibah',
+        'pengusul' => 'Pengusul',
+        'posisi_dosen' => 'Posisi Dosen',
+        'deskripsi' => 'Deskripsi',
+        'status_verifikasi' => 'Status Verifikasi',
+        'tanggal_upload' => 'Tanggal Upload',
+        'tanggal_verifikasi' => 'Tanggal Verifikasi',
+        'catatan_verifikasi' => 'Catatan Verifikasi',
+        'file_proposal' => 'File Proposal',
+        'download_proposal' => 'Download Proposal',
+        'file_not_available' => 'File proposal tidak tersedia',
+        'aksi_verifikasi' => 'Aksi Verifikasi',
+        'catatan_opsional' => 'Catatan (Opsional)',
+        'catatan_placeholder' => 'Catatan persetujuan...',
+        'approve_hibah' => 'Approve Hibah',
+        'catatan_penolakan' => 'Catatan Penolakan',
+        'alasan_penolakan' => 'Alasan penolakan...',
+        'reject_hibah' => 'Reject Hibah',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+        'draft' => 'Draft',
+        'confirm_approve' => 'Approve hibah ini?',
+        'confirm_reject' => 'Reject hibah ini?',
+        'language' => 'Bahasa',
+    ],
+    'en' => [
+        'title_tab' => 'Hibah Detail',
+        'title' => 'Hibah Detail',
+        'dashboard' => 'Dashboard',
+        'hibah_verification' => 'Hibah Verification',
+        'detail' => 'Detail',
+        'hibah_details' => 'Hibah Details',
+        'judul_hibah' => 'Hibah Title',
+        'pengusul' => 'Proposer',
+        'posisi_dosen' => 'Lecturer Position',
+        'deskripsi' => 'Description',
+        'status_verifikasi' => 'Verification Status',
+        'tanggal_upload' => 'Upload Date',
+        'tanggal_verifikasi' => 'Verification Date',
+        'catatan_verifikasi' => 'Verification Notes',
+        'file_proposal' => 'Proposal File',
+        'download_proposal' => 'Download Proposal',
+        'file_not_available' => 'Proposal file not available',
+        'aksi_verifikasi' => 'Verification Action',
+        'catatan_opsional' => 'Notes (Optional)',
+        'catatan_placeholder' => 'Approval notes...',
+        'approve_hibah' => 'Approve Hibah',
+        'catatan_penolakan' => 'Rejection Notes',
+        'alasan_penolakan' => 'Rejection reason...',
+        'reject_hibah' => 'Reject Hibah',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+        'draft' => 'Draft',
+        'confirm_approve' => 'Approve this hibah?',
+        'confirm_reject' => 'Reject this hibah?',
+        'language' => 'Language',
+    ]
+];
 
+function t($key, $lang = 'id')
+{
+    global $translations;
+    return $translations[$lang][$key] ?? $key;
+}
 
 // Handle language switch
 if (isset($_GET['lang'])) {

@@ -93,6 +93,7 @@ class Abdimas extends ResourceController
         $data['mitra'] = $this->abdimas->getMitra();
         $data['anggota'] = $anggota;
         $data['laporan'] = $this->abdimas->getAll();
+        $data['mahasiswa'] = $this->mahasiswa->findAll();
 
         return view('abdimas/index', $data);
     }
@@ -542,7 +543,7 @@ class Abdimas extends ResourceController
     public function update($id = null)
     {
         // Cek data laporan
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
         if (!$abdimas) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
@@ -648,7 +649,7 @@ class Abdimas extends ResourceController
         $data['title'] = 'Update Laporan';
         $data['pesan'] = $this->pesan->getPesan();
 
-        $abdimas =  $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
         if (is_object($abdimas)) {
             $data['abdimas']    = $abdimas;
             return view('abdimas/upload_proposal', $data);
@@ -661,7 +662,7 @@ class Abdimas extends ResourceController
 
     public function updateProposal($id = null)
     {
-        $abdimas = $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
         $old_pdf_name = $abdimas->proposal;
 
         $file = $this->request->getFile('proposal');
@@ -1018,7 +1019,7 @@ if (!empty($tanggal_kegiatan)) {
 
     // Validasi khusus untuk mitra (role_id = 5)
     if (userLogin()->role_id == 5) {
-        $laporan = $this->abdimas->find($id);
+        $laporan = $this->abdimas->getAbdimasWithBidangIlmu($id);
         if (!$laporan || $laporan->mitra_id != userLogin()->user_id) {
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Data tidak ditemukan atau tidak memiliki akses');
         }
@@ -1192,7 +1193,7 @@ if (!empty($tanggal_kegiatan)) {
         $bidang = !empty($jurusanList) ? implode(', ', $jurusanList) : '-';
 
         // ===== QR CODE Content =====
-        $qr_ketua_content = ($abdimas['ketua'] ?? '-') .
+        $qr_ketua_content = ($abdimas['ketua_nama'] ?? '-') .
             "\nNIDN: " . ($abdimas['ketua_nidn'] ?? '-') .
             "\nPeriode: " . $periode_display .
             "\nAnggota:\n";
@@ -1207,7 +1208,7 @@ if (!empty($tanggal_kegiatan)) {
 
         $data = [
             'judul_kegiatan'    => $abdimas['judul_kegiatan'] ?? '-',
-            'ketua'             => $abdimas['ketua'] ?? '-',
+            'ketua'             => $abdimas['ketua_nama'] ?? '-',
             'ketua_nidn'        => $abdimas['ketua_nidn'] ?? '-',
             'lokasi_mitra'      => $lokasi_mitra,
             'tanggal_kegiatan'  => $tanggal_kegiatan_formatted,
@@ -1242,28 +1243,28 @@ if (!empty($tanggal_kegiatan)) {
         $currentY = $pdf->GetY();
         $pageHeight = $pdf->getPageHeight();
         $bottomMargin = 15;
-        $neededSpace = 70;
+        $neededSpace = 45;
 
         if ($currentY + $neededSpace > ($pageHeight - $bottomMargin)) {
             $pdf->AddPage();
             $currentY = $pdf->GetY();
         }
 
-        $y_pos = $currentY + 10;
+        $y_pos = $currentY + 5;
         $marginLeft = 20;
         $pageWidth = $pdf->getPageWidth();
         $contentWidth = $pageWidth - 2 * $marginLeft;
         $colWidth = $contentWidth / 2;
-        $qrSize = 20;
+        $qrSize = 18;
 
         // LPM
         $pdf->SetXY($marginLeft, $y_pos);
         $pdf->MultiCell($colWidth, 5,
             "Mengetahui,\nKetua Lembaga Pengabdian kepada Masyarakat\nUniversitas Gunadarma",
             0, 'C', false);
-        $pdf->SetXY($marginLeft + ($colWidth - $qrSize) / 2, $y_pos + 20);
-        $pdf->write2DBarcode($qr_lpm_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize);
-        $pdf->SetXY($marginLeft, $y_pos + 45);
+        $pdf->SetXY($marginLeft + ($colWidth - $qrSize) / 2, $y_pos + 15);
+        $pdf->write2DBarcode($qr_lpm_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
+        $pdf->SetXY($marginLeft, $y_pos + 35);
         $pdf->MultiCell($colWidth, 5,
             "(Dr. Aris Budi Setyawan, SE., MM., M.Si)\nNIDN/NIP: 0326057004 / 930391",
             0, 'C', false);
@@ -1271,11 +1272,11 @@ if (!empty($tanggal_kegiatan)) {
         // Ketua Pengusul
         $pdf->SetXY($marginLeft + $colWidth, $y_pos);
         $pdf->MultiCell($colWidth, 5, "Ketua Pengusul", 0, 'C', false);
-        $pdf->SetXY($marginLeft + $colWidth + ($colWidth - $qrSize) / 2, $y_pos + 20);
-        $pdf->write2DBarcode($qr_ketua_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize);
-        $pdf->SetXY($marginLeft + $colWidth, $y_pos + 45);
+        $pdf->SetXY($marginLeft + $colWidth + ($colWidth - $qrSize) / 2, $y_pos + 15);
+        $pdf->write2DBarcode($qr_ketua_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
+        $pdf->SetXY($marginLeft + $colWidth, $y_pos + 35);
         $pdf->MultiCell($colWidth, 5,
-            "(" . ($abdimas['ketua'] ?? '-') . ")\nNIDN: " . ($abdimas['ketua_nidn'] ?? '-') ,
+            "(" . ($abdimas['ketua_nama'] ?? '-') . ")\nNIDN: " . ($abdimas['ketua_nidn'] ?? '-') ,
             0, 'C', false);
 
         // ===== Render Lampiran =====
@@ -1313,6 +1314,199 @@ if (!empty($tanggal_kegiatan)) {
         $existingSpm = $this->dokumenMitra->getDokumenByMitraAndType($mitraId, 'spm', $periodeId);
 
         return !empty($existingSpm);
+    }
+
+    public function formSuratBalasan()
+    {
+        helper('auth');
+        if (!in_array(userLogin()->role_id, [1, 2, 3, 4])) {
+            return redirect()->to(site_url('dashboard'));
+        }
+        $data = [
+            'title'     => 'Form Surat Balasan',
+            'title_tab' => 'Surat Balasan'
+        ];
+        return view('abdimas/form_surat_balasan', $data);
+    }
+
+    public function generateSuratBalasanPdfFromForm()
+    {
+        helper('auth');
+        if (!in_array(userLogin()->role_id, [1, 2, 3, 4])) {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $post = $this->request->getPost();
+
+        // Validate
+        $rules = [
+            'judul_kegiatan'   => 'required',
+            'ketua'            => 'required',
+            'ketua_nidn'       => 'required',
+            'lokasi_mitra'     => 'required',
+            'tanggal_kegiatan' => 'required',
+            'bidang_ilmu'      => 'required',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('error', 'Silakan lengkapi semua field yang wajib.');
+        }
+
+        try {
+            require_once ROOTPATH . 'vendor/tecnickcom/tcpdf/tcpdf.php';
+            require_once ROOTPATH . 'vendor/tecnickcom/tcpdf/tcpdf_barcodes_2d.php';
+
+            $judul_kegiatan = $post['judul_kegiatan'];
+            $ketua = $post['ketua'];
+            $ketua_nidn = $post['ketua_nidn'];
+            $lokasi_mitra = $post['lokasi_mitra'];
+            $tanggal_kegiatan_raw = $post['tanggal_kegiatan'];
+            $bidang_ilmu = $post['bidang_ilmu'];
+            $anggota = $post['anggota'] ?? [];
+            $bidang_ilmu_anggota = $post['bidang_ilmu_anggota'] ?? [];
+
+            // Format tanggal
+            $formatter = new \IntlDateFormatter('id_ID', \IntlDateFormatter::FULL, \IntlDateFormatter::NONE, 'Asia/Jakarta', \IntlDateFormatter::GREGORIAN);
+            $formatter->setPattern('dd MMMM yyyy');
+            $tanggal_kegiatan_formatted = $formatter->format(date_create($tanggal_kegiatan_raw));
+
+            // Format display PTA/ATA based on the date
+            $bulan = (int)date('m', strtotime($tanggal_kegiatan_raw));
+            $tahun = (int)date('Y', strtotime($tanggal_kegiatan_raw));
+            if ($bulan >= 9 && $bulan <= 12) { 
+                $tanggal_mulai = "September $tahun";
+                $tanggal_selesai = "Februari " . ($tahun + 1);
+                $periode_display = "PTA $tahun/".($tahun+1);
+            } elseif ($bulan >= 3 && $bulan <= 8) { 
+                $tanggal_mulai = "Maret $tahun";
+                $tanggal_selesai = "Agustus $tahun";
+                $periode_display = "ATA ".($tahun-1)."/$tahun";
+            } else {
+                $tanggal_mulai = "September " . ($tahun - 1);
+                $tanggal_selesai = "Februari $tahun";
+                $periode_display = "PTA ".($tahun-1)."/$tahun";
+            }
+            $tanggal_display = $tanggal_mulai . ' s/d ' . $tanggal_selesai;
+
+            // Dosen List
+            $dosenList = [];
+            
+            // Map bidang_ilmu code to actual text
+            $bidangMap = [
+                'ipa-matematika' => 'Ilmu Pengetahuan Alam (IPA) & Matematika',
+                'teknik-rekayasa' => 'Ilmu Teknik & Rekayasa',
+                'kesehatan-kedokteran' => 'Ilmu Kesehatan & Kedokteran',
+                'sosial-humaniora-seni' => 'Ilmu Sosial, Humaniora, & Seni',
+                'pertanian-tanaman' => 'Ilmu Pertanian & Tanaman'
+            ];
+            
+            $dosenList[] = [
+                'user_name' => $ketua,
+                'jurusan_name' => $bidangMap[$bidang_ilmu] ?? $bidang_ilmu
+            ];
+
+            foreach ($anggota as $index => $nama_anggota) {
+                if (!empty($nama_anggota)) {
+                    $bidang = $bidang_ilmu_anggota[$index] ?? '';
+                    $dosenList[] = [
+                        'user_name' => $nama_anggota,
+                        'jurusan_name' => $bidangMap[$bidang] ?? $bidang
+                    ];
+                }
+            }
+
+            // Bidang unik
+            $jurusanList = array_column($dosenList, 'jurusan_name');
+            $jurusanList = array_unique(array_filter($jurusanList));
+            $bidang = !empty($jurusanList) ? implode(', ', $jurusanList) : '-';
+
+            // Data untuk View
+            $mitraObj = (object)['user_name' => 'Pimpinan/Perwakilan Mitra', 'alamat' => $lokasi_mitra];
+            
+            $data = [
+                'judul_kegiatan'    => $judul_kegiatan,
+                'ketua'             => $ketua,
+                'ketua_nidn'        => $ketua_nidn,
+                'lokasi_mitra'      => $lokasi_mitra,
+                'tanggal_kegiatan'  => $tanggal_kegiatan_formatted,
+                'tanggal_display'   => $tanggal_display,
+                'mitra'             => $mitraObj,
+                'periode_display'   => $periode_display,
+                'bidang'            => $bidang,
+                'dosenList'         => $dosenList,
+                'nomor_surat_auto'  => '..../LPM/UG/.../'.date('Y'),
+                'nomor_surat_mitra' => '.........................',
+                'tanggal_surat'     => '.........................',
+                'spmRecord'         => (object)['created_at' => date('Y-m-d H:i:s')],
+            ];
+
+            // QR Content
+            $qr_ketua_content = $ketua . "\nNIDN: " . $ketua_nidn . "\nPeriode: " . $periode_display . "\nAnggota:\n";
+            $qr_lpm_content = "Dr. Aris Budi Setyawan, SE., MM., M.Si\nNIDN: 0326057004\nPeriode: " . $periode_display;
+
+            // Init PDF
+            ini_set('memory_limit', '1028M');
+            $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetCreator('Sistem Pengabdian Masyarakat');
+            $pdf->SetAuthor($ketua);
+            $pdf->SetTitle('Surat Balasan - ' . $judul_kegiatan);
+            $pdf->AddPage();
+
+            // Render Surat
+            $html = view('abdimas/surat_balasan', $data);
+            $pdf->writeHTML($html, true, false, true, false, '');
+
+            // Tanda Tangan & QR
+            $pdf->SetFont('helvetica', '', 10);
+            $currentY = $pdf->GetY();
+            $pageHeight = $pdf->getPageHeight();
+            $bottomMargin = 15;
+            $neededSpace = 45;
+
+            if ($currentY + $neededSpace > ($pageHeight - $bottomMargin)) {
+                $pdf->AddPage();
+                $currentY = $pdf->GetY();
+            }
+
+            $y_pos = $currentY + 5;
+            $marginLeft = 20;
+            $pageWidth = $pdf->getPageWidth();
+            $contentWidth = $pageWidth - 2 * $marginLeft;
+            $colWidth = $contentWidth / 2;
+            $qrSize = 18;
+
+            // LPM
+            $pdf->SetXY($marginLeft, $y_pos);
+            $pdf->MultiCell($colWidth, 5, "Mengetahui,\nKetua Lembaga Pengabdian kepada Masyarakat\nUniversitas Gunadarma", 0, 'C', false);
+            $pdf->SetXY($marginLeft + ($colWidth - $qrSize) / 2, $y_pos + 15);
+            $pdf->write2DBarcode($qr_lpm_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
+            $pdf->SetXY($marginLeft, $y_pos + 35);
+            $pdf->MultiCell($colWidth, 5, "(Dr. Aris Budi Setyawan, SE., MM., M.Si)\nNIDN/NIP: 0326057004 / 930391", 0, 'C', false);
+
+            // Ketua Pengusul
+            $pdf->SetXY($marginLeft + $colWidth, $y_pos);
+            $pdf->MultiCell($colWidth, 5, "Ketua Pengusul", 0, 'C', false);
+            $pdf->SetXY($marginLeft + $colWidth + ($colWidth - $qrSize) / 2, $y_pos + 15);
+            $pdf->write2DBarcode($qr_ketua_content, 'QRCODE,L', $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
+            $pdf->SetXY($marginLeft + $colWidth, $y_pos + 35);
+            $pdf->MultiCell($colWidth, 5, "(" . $ketua . ")\nNIDN: " . $ketua_nidn, 0, 'C', false);
+
+            // Lampiran
+            $lampiran = view('abdimas/lampiran', $data);
+            $pdf->writeHTML($lampiran, true, false, true, false, '');
+
+            // Output
+            if (ob_get_length()) ob_end_clean();
+            $filename = 'Surat_Balasan_' . preg_replace('/[^a-z0-9]/i', '_', $judul_kegiatan) . '.pdf';
+            $pdf->Output($filename, 'I');
+            exit;
+
+        } catch (\Exception $e) {
+            log_message('error', 'PDF Error - ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
 }
