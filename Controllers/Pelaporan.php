@@ -13,6 +13,7 @@ use App\Models\SubprogramModel;
 use App\Models\LuaranModel;
 use App\Models\PeriodeModel;
 use App\Models\PesanModel;
+use App\Models\MahasiswaModel;
 use Google\Cloud\Translate\V2\TranslateClient;
 
 
@@ -29,6 +30,7 @@ class Pelaporan extends ResourceController
         $this->luaran       = new LuaranModel();
         $this->periode      = new PeriodeModel();
         $this->pesan        = new PesanModel();
+        $this->mahasiswa    = new MahasiswaModel();
     }
     /**
      * Return an array of resource objects, themselves in array format
@@ -79,6 +81,7 @@ class Pelaporan extends ResourceController
         $data['mitra'] = $this->abdimas->getMitra();
         $data['anggota'] = $this->tags->getAnggota();
         $data['laporan'] = $this->abdimas->getAll();
+        $data['mahasiswa'] = $this->mahasiswa->findAll();
 
         return view('abdimas/index_pelaporan', $data);
     }
@@ -148,7 +151,7 @@ class Pelaporan extends ResourceController
         $data['title_tab'] = $title . ' &mdash; LPM UG';
         $data['pesan'] = $this->pesan->getPesan();
 
-        $abdimas =  $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
         if (is_object($abdimas)) {
             $data['abdimas']    = $abdimas;
             $data['dosen']      = $this->dosen->findAll();
@@ -177,7 +180,7 @@ class Pelaporan extends ResourceController
     public function update($id = null)
     {
         $db      = \Config\Database::connect();
-        $abdimas =  $this->abdimas->find($id);
+        $abdimas = $this->abdimas->getAbdimasWithBidangIlmu($id);
 
         $old_laporan_name = $abdimas->laporan;
         // LAPORAN

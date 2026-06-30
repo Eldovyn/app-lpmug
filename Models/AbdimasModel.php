@@ -93,6 +93,7 @@ class AbdimasModel extends Model
         return $query->getResult();
     }
 
+<<<<<<< HEAD
     public function countJurusanUnik()
     {
         $builder = $this->builder('tbl_jurusan');
@@ -259,6 +260,10 @@ class AbdimasModel extends Model
 
     function getPaginated($num, $keyword = null)
     {
+=======
+
+    function getPaginated($num, $keyword = null) {
+>>>>>>> 55c0835 (refactor: update code)
         $userLogin = userLogin()->user_id;
         $builder = $this->builder()->orderBy('tbl_laporan.laporan_id', 'DESC');
         $builder->select('tbl_laporan.*, tbl_users.user_name as ketua_name, tbl_users.gelar_dpn, tbl_users.gelar_blkng, tbl_periode.periode_name, tbl_periode.tahun_ajaran');
@@ -274,6 +279,7 @@ class AbdimasModel extends Model
             'pager'         => $this->pager,
         ];
     }
+<<<<<<< HEAD
 
     public function getLaporanById($id)
     {
@@ -285,6 +291,19 @@ class AbdimasModel extends Model
             ->get()
             ->getRowArray();
     }
+=======
+    
+ public function getLaporanById($id)
+{
+    return $this->db->table('tbl_laporan l')
+        ->select('l.*, m.user_name as mitra_name, k.user_name as ketua, k.nidn as ketua_nidn')
+        ->join('tbl_users m', 'm.user_id = l.mitra_id', 'left') // Mitra
+        ->join('tbl_users k', 'k.user_id = l.ketua_id', 'left') // Ketua
+        ->where('l.laporan_id', $id)
+        ->get()
+        ->getRowArray();
+}
+>>>>>>> 55c0835 (refactor: update code)
 
 
 
@@ -293,7 +312,11 @@ class AbdimasModel extends Model
     {
         return $this->db->table('tbl_tags t')
             ->select('u.user_id, u.user_name,u.nidn, j.jurusan_name')
+<<<<<<< HEAD
             ->join('tbl_users u', 'u.user_id = t.anggota_id')
+=======
+            ->join('tbl_users u', 'u.user_id = t.anggota_id') 
+>>>>>>> 55c0835 (refactor: update code)
             ->join('tbl_jurusan j', 'j.jurusan_id = u.jurusan_id', 'left')
             ->where('t.laporan_id', $laporan_id)
             ->where('t.anggota_id !=', $ketua_id)
@@ -302,6 +325,7 @@ class AbdimasModel extends Model
             ->getResultArray();
     }
 
+<<<<<<< HEAD
     /**
      * Ambil semua laporan di mana user adalah ketua pengusul
      */
@@ -351,3 +375,6 @@ class AbdimasModel extends Model
             ->getRow();
     }
 }
+=======
+}
+>>>>>>> 55c0835 (refactor: update code)

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 // ====== LOGIC TRANSLATION (SINGLE FILE) ======
 helper(['cookie', 'url']);
@@ -76,6 +77,8 @@ if (! function_exists('lang_url')) {
 }
 ?>
 
+=======
+>>>>>>> 55c0835 (refactor: update code)
 <?= $this->extend('layouts/default') ?>
 <?= $this->section('content') ?>
 
@@ -84,7 +87,11 @@ if (! function_exists('lang_url')) {
         <!-- Header -->
         <div class="card-header bg-white border-0 d-flex align-items-center">
             <i class="fas fa-folder-open text-primary me-2"></i>
+<<<<<<< HEAD
             <h5 class="mb-0 fw-bold text-dark"><?= esc($t('header_title')) ?></h5>
+=======
+            <h5 class="mb-0 fw-bold text-dark">Arsip Surat Abdimas</h5>
+>>>>>>> 55c0835 (refactor: update code)
         </div>
 
         <!-- Body -->
@@ -93,12 +100,18 @@ if (! function_exists('lang_url')) {
                 <table class="table table-striped table-hover align-middle mb-0">
                     <thead class="bg-white text-dark text-center">
                         <tr>
+<<<<<<< HEAD
                             <th style="width: 30%;"><?= esc($t('th_doc')) ?></th>
                             <th><?= esc($t('th_action')) ?></th>
+=======
+                            <th style="width: 30%;">Jenis Dokumen</th>
+                            <th>Aksi</th>
+>>>>>>> 55c0835 (refactor: update code)
                         </tr>
                     </thead>
                     <tbody class="text-center">
                         <tr>
+<<<<<<< HEAD
                             <td class="text-black bg-white"><?= esc($t('td_laporan')) ?></td>
                             <td>
                                 <?php if ($abdimas->laporan): ?>
@@ -169,6 +182,63 @@ if (! function_exists('lang_url')) {
                                 </a>
                             </td>
                         </tr>
+=======
+                            <td class="text-black bg-white">Laporan</td>
+                            <td>
+                                <?php if ($abdimas->laporan): ?>
+                                    <a href="<?= site_url('berkas/laporan/' . $abdimas->laporan) ?>"
+                                       target="_blank"
+                                       class="btn btn-warning text-white btn-sm">
+                                       <i class="fas fa-file-alt me-1"></i> Lihat
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-danger fw-semibold">Belum ada laporan</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-black bg-white">Bukti Kegiatan</td>
+                            <td>
+                                <?php if ($abdimas->bukti_kegiatan): ?>
+                                    <a href="<?= site_url('berkas/kegiatan/' . $abdimas->bukti_kegiatan) ?>"
+                                       target="_blank"
+                                       class="btn btn-warning text-white btn-sm">
+                                       <i class="fas fa-image me-1"></i> Lihat
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-danger fw-semibold">Belum ada bukti kegiatan</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-black bg-white">SPM</td>
+                            <td>
+                                <?php if ($abdimas->spm): ?>
+                                    <a href="<?= site_url('berkas/spm/' . $abdimas->spm) ?>"
+                                       target="_blank"
+                                       class="btn btn-warning text-white btn-sm">
+                                       <i class="fas fa-file me-1"></i> Lihat
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-danger fw-semibold">Belum ada SPM</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-black bg-white">SKM</td>
+                            <td>
+                                <?php if ($abdimas->skm): ?>
+                                    <a href="<?= site_url('berkas/skm/' . $abdimas->skm) ?>"
+                                       target="_blank"
+                                       class="btn btn-warning text-white btn-sm">
+                                       <i class="fas fa-file-signature me-1"></i> Lihat
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-danger fw-semibold">Belum ada SKM</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+>>>>>>> 55c0835 (refactor: update code)
                     </tbody>
                 </table>
             </div>
@@ -176,9 +246,17 @@ if (! function_exists('lang_url')) {
 
         <!-- Footer -->
         <div class="card-footer bg-white text-center text-muted small border-0">
+<<<<<<< HEAD
             <i class="fas fa-lock me-1"></i> <?= esc($t('footer_text')) ?> • <?= date('Y') ?>
+=======
+            <i class="fas fa-lock me-1"></i> Data arsip ini dikelola oleh LPM • <?= date('Y') ?>
+>>>>>>> 55c0835 (refactor: update code)
         </div>
     </div>
 </div>
 
+<<<<<<< HEAD
 <?= $this->endSection() ?>
+=======
+<?= $this->endSection() ?>
+>>>>>>> 55c0835 (refactor: update code)

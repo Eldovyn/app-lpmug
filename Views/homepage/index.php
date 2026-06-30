@@ -343,11 +343,9 @@ $faqData = $faqCategories[$lang] ?? $faqCategories['id'];
         background: rgba(102, 126, 234, 0.05);
     }
 
-    #faqSection .faq-btn:focus,
-    #faqSection .faq-btn:active {
-        outline: none !important;
-        box-shadow: none !important;
-        border: none !important;
+    #faqSection .faq-btn:focus {
+        outline: none;
+        box-shadow: none;
     }
 
     /* FAQ Icon */

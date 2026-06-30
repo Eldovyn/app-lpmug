@@ -244,31 +244,6 @@ class Mitra extends ResourceController
     public function update($id = null)
     {
         $data = $this->request->getPost();
-        
-        $password = $this->request->getVar('password');
-        $password_confirm = $this->request->getVar('password_confirm');
-
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = get_cookie('lang') ?: 'id';
-        }
-        if (!in_array($lang, ['id', 'en'], true)) {
-            $lang = 'id';
-        }
-
-        if ((string)$password !== '' || (string)$password_confirm !== '') {
-            if ($password !== $password_confirm) {
-                $errorMsg = $lang === 'en' ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.';
-                return redirect()->back()->withInput()->with('error_password_confirm', $errorMsg);
-            }
-            $data['password'] = password_hash($password, PASSWORD_BCRYPT);
-            unset($data['password_confirm']); // Ensure password_confirm is not saved to DB
-        } else {
-            // Remove password fields so they are not updated if empty
-            unset($data['password']);
-            unset($data['password_confirm']);
-        }
-
         // $data = [
         //     'user_name'     => $this->request->getVar('user_name'),
         //     'nidn'          => $this->request->getVar('nidn'),
@@ -969,6 +944,39 @@ class Mitra extends ResourceController
             'periode_id' => $periodeId,
             'spm_exists' => $result
         ]);
+    }
+
+    /**
+     * Update password for a mitra account (called from list page modal)
+     */
+    public function updatePassword($id = null)
+    {
+        if (!in_array(userLogin()->role_id, [1, 2, 3])) {
+            return redirect()->to(site_url('mitra'))->with('error', 'Anda tidak memiliki akses untuk mengubah password.');
+        }
+
+        $mitra = $this->mitra->find($id);
+        if (!$mitra) {
+            return redirect()->to(site_url('mitra'))->with('error', 'Data mitra tidak ditemukan.');
+        }
+
+        $newPassword     = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        // Validasi server-side
+        if (empty($newPassword) || strlen($newPassword) < 6) {
+            return redirect()->back()->with('error', 'Password minimal 6 karakter.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return redirect()->back()->with('error', 'Password dan konfirmasi tidak cocok.');
+        }
+
+        $this->mitra->update($id, [
+            'password' => password_hash($newPassword, PASSWORD_BCRYPT),
+        ]);
+
+        return redirect()->to(site_url('mitra'))->with('success', 'Password mitra "' . esc($mitra->user_name) . '" berhasil diperbarui.');
     }
 
     private function translateText(string $text, string $source, string $target): string

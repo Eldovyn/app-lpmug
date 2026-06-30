@@ -33,10 +33,13 @@ class MahasiswaModel extends Model
                 tbl_mahasiswa.*,
                 tbl_jurusan.jurusan_name,
                 tbl_laporan.proposal,
-                tbl_laporan.laporan
+                tbl_laporan.laporan,
+                tbl_laporan.judul_kegiatan,
+                tbl_users.user_name as ketua_name
             ')
-            ->join('tbl_jurusan', 'tbl_jurusan.jurusan_id = tbl_mahasiswa.jurusan_id')
-            ->join('tbl_laporan', 'tbl_laporan.laporan_id = tbl_mahasiswa.laporan_id');
+            ->join('tbl_jurusan', 'tbl_jurusan.jurusan_id = tbl_mahasiswa.jurusan_id', 'left')
+            ->join('tbl_laporan', 'tbl_laporan.laporan_id = tbl_mahasiswa.laporan_id', 'left')
+            ->join('tbl_users', 'tbl_users.user_id = tbl_laporan.ketua_id', 'left');
 
         if ($id !== null) {
             $builder->where('tbl_mahasiswa.mahasiswa_id', $id);

@@ -226,7 +226,7 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
                         <div class="filter-semester">
                             <div class="row">
                                 <div class="col-md-8 offset-md-4 col-lg-4 offset-lg-8 ml-auto">
-                                    <select class="form-control select2" id="semesterFilter" style="width:100%;">
+                                    <select class="form-control" id="semesterFilter">
                                         <option value=""><?= t('all_semester') ?></option>
                                         <?php if (!empty($periodes)): ?>
                                             <?php foreach ($periodes as $periode): ?>
@@ -346,18 +346,12 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Filter Semester - Auto reload on change with support for Select2
-        if ($('#semesterFilter').length) {
-            $('#semesterFilter').on('change', function() {
-                // Get value BEFORE modifying the UI (because disabled selects might return null)
-                const selectedValue = $(this).val();
-
-                // UI Feedback Optimization: Prevent multiple clicks and show loading text
-                const selectedOption = $(this).find('option:selected');
-                selectedOption.text('Memuat data...');
-                $(this).prop('disabled', true);
-
+    (function() {
+        // Filter Semester - Auto reload on change
+        const semesterFilter = document.getElementById('semesterFilter');
+        if (semesterFilter) {
+            semesterFilter.addEventListener('change', function() {
+                const selectedValue = this.value;
                 const currentUrl = new URL(window.location.href);
 
                 if (selectedValue === '') {
@@ -478,7 +472,7 @@ $tanggalSelesai = formatTanggalID($tanggal_array[1] ?? null);
                 showToast('Gagal mengunduh PDF: ' + error.message, 'danger');
             }
         });
-    });
+    })();
 </script>
 
 <?= $this->endSection() ?>

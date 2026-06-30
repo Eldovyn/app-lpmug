@@ -158,6 +158,7 @@ class Rekapan extends ResourceController
         $data['mitra'] = $this->rekapan->getMitra();
         $data['periode'] = $this->periode->findAll();
         $data['anggota'] = $this->rekapan->getAnggota();
+        $data['mahasiswa'] = $this->mahasiswa->findAll();
 
         return $data;
     }

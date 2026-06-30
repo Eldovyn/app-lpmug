@@ -23,40 +23,56 @@ if ($request->getGet('lang')) {
 // dictionary
 $dict = [
     'id' => [
-        'dashboard' => 'Dashboard',
-        'mitra' => 'Mitra',
-        'congrats' => 'Selamat!',
-        'error' => 'Warning Error!',
-        'register_mitra' => 'Daftarkan Mitra',
-        'th_no' => '#',
-        'th_nama_mitra' => 'Nama Mitra',
-        'th_kontak' => 'Kontak',
-        'th_kebutuhan' => 'Kebutuhan',
-        'th_alamat' => 'Alamat',
-        'th_action' => 'Action',
-        'contact_person' => 'Contact Person',
-        'email' => 'Email',
-        'update' => 'Perbaharui',
-        'delete_title' => 'Hapus data?',
-        'delete_msg' => 'Apakah anda yakin?',
+        'dashboard'       => 'Dashboard',
+        'mitra'           => 'Mitra',
+        'congrats'        => 'Selamat!',
+        'error'           => 'Warning Error!',
+        'register_mitra'  => 'Daftarkan Mitra',
+        'th_no'           => '#',
+        'th_nama_mitra'   => 'Nama Mitra',
+        'th_kontak'       => 'Kontak',
+        'th_kebutuhan'    => 'Kebutuhan',
+        'th_alamat'       => 'Alamat',
+        'th_action'       => 'Action',
+        'contact_person'  => 'Contact Person',
+        'email'           => 'Email',
+        'update'          => 'Perbaharui',
+        'delete_title'    => 'Hapus data?',
+        'delete_msg'      => 'Apakah anda yakin?',
+        'edit_password'   => 'Edit Password',
+        'modal_title'     => 'Ganti Password Mitra',
+        'new_password'    => 'Password Baru',
+        'confirm_password'=> 'Konfirmasi Password',
+        'cancel'          => 'Batal',
+        'save'            => 'Simpan',
+        'password_min'    => 'Password minimal 6 karakter.',
+        'password_mismatch' => 'Password dan konfirmasi tidak cocok.',
     ],
     'en' => [
-        'dashboard' => 'Dashboard',
-        'mitra' => 'Partner',
-        'congrats' => 'Congratulations!',
-        'error' => 'Warning Error!',
-        'register_mitra' => 'Register Partner',
-        'th_no' => '#',
-        'th_nama_mitra' => 'Partner Name',
-        'th_kontak' => 'Contact',
-        'th_kebutuhan' => 'Needs',
-        'th_alamat' => 'Address',
-        'th_action' => 'Action',
-        'contact_person' => 'Contact Person',
-        'email' => 'Email',
-        'update' => 'Update',
-        'delete_title' => 'Delete data?',
-        'delete_msg' => 'Are you sure?',
+        'dashboard'       => 'Dashboard',
+        'mitra'           => 'Partner',
+        'congrats'        => 'Congratulations!',
+        'error'           => 'Warning Error!',
+        'register_mitra'  => 'Register Partner',
+        'th_no'           => '#',
+        'th_nama_mitra'   => 'Partner Name',
+        'th_kontak'       => 'Contact',
+        'th_kebutuhan'    => 'Needs',
+        'th_alamat'       => 'Address',
+        'th_action'       => 'Action',
+        'contact_person'  => 'Contact Person',
+        'email'           => 'Email',
+        'update'          => 'Update',
+        'delete_title'    => 'Delete data?',
+        'delete_msg'      => 'Are you sure?',
+        'edit_password'   => 'Edit Password',
+        'modal_title'     => 'Change Partner Password',
+        'new_password'    => 'New Password',
+        'confirm_password'=> 'Confirm Password',
+        'cancel'          => 'Cancel',
+        'save'            => 'Save',
+        'password_min'    => 'Password must be at least 6 characters.',
+        'password_mismatch' => 'Password and confirmation do not match.',
     ],
 ];
 
@@ -220,6 +236,13 @@ function translateMitraText(string $text, string $source, string $target): strin
                                         </td>
                                         <td class="text-center">
                                             <a href="<?= site_url('mitra/' . $v_mitra->user_id . '/edit'); ?>" class="btn btn-warning btn-sm m-1" style="width:100px;"><i class="fas fa-pencil-alt"></i> <?= esc($t['update']); ?></a><br>
+                                            <button type="button"
+                                                class="btn btn-info btn-sm m-1"
+                                                style="width:100px;"
+                                                onclick="openPasswordModal(<?= $v_mitra->user_id; ?>, '<?= esc(addslashes($v_mitra->user_name)); ?>')"
+                                            >
+                                                <i class="fas fa-key"></i> <?= esc($t['edit_password']); ?>
+                                            </button><br>
                                             <?php if (userLogin()->role_id == 4): ?>
                                                 <form action="<?= site_url('mitra/' . $v_mitra->user_id); ?>" method="POST" class="d-inline" id="del-<?= $v_mitra->user_id; ?>">
                                                     <?= csrf_field(); ?>
@@ -248,4 +271,110 @@ function translateMitraText(string $text, string $source, string $target): strin
         </div>
     </div>
 </section>
+
+<!-- Modal Edit Password Mitra -->
+<div class="modal fade" id="modalEditPassword" tabindex="-1" role="dialog" aria-labelledby="modalEditPasswordLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8, #117a8b);">
+                <h5 class="modal-title text-white" id="modalEditPasswordLabel">
+                    <i class="fas fa-key mr-2"></i><?= esc($t['modal_title']); ?>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formEditPassword" method="POST" action="" onsubmit="return validatePasswordForm()">
+                <?= csrf_field(); ?>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-user-circle mr-1"></i>
+                        Mitra: <strong id="mitraNameLabel"></strong>
+                    </p>
+                    <div class="form-group">
+                        <label for="new_password"><?= esc($t['new_password']); ?> <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="new_password" name="new_password"
+                                placeholder="Min. 6 karakter" required minlength="6">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('new_password', 'icon_new')">
+                                    <i class="fas fa-eye" id="icon_new"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password"><?= esc($t['confirm_password']); ?> <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                placeholder="Ulangi password baru" required minlength="6">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirm_password', 'icon_confirm')">
+                                    <i class="fas fa-eye" id="icon_confirm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="password-error" class="alert alert-danger d-none" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i><?= esc($t['cancel']); ?>
+                    </button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save mr-1"></i><?= esc($t['save']); ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var baseUrl = '<?= site_url(); ?>';
+    var msgMin  = '<?= esc($t['password_min']); ?>';
+    var msgMismatch = '<?= esc($t['password_mismatch']); ?>';
+
+    function openPasswordModal(mitraId, mitraName) {
+        document.getElementById('mitraNameLabel').textContent = mitraName;
+        document.getElementById('formEditPassword').action = baseUrl + 'mitra/update-password/' + mitraId;
+        document.getElementById('new_password').value = '';
+        document.getElementById('confirm_password').value = '';
+        document.getElementById('password-error').classList.add('d-none');
+        document.getElementById('password-error').textContent = '';
+        $('#modalEditPassword').modal('show');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+        var input = document.getElementById(inputId);
+        var icon  = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    function validatePasswordForm() {
+        var newPwd  = document.getElementById('new_password').value;
+        var confPwd = document.getElementById('confirm_password').value;
+        var errBox  = document.getElementById('password-error');
+
+        if (newPwd.length < 6) {
+            errBox.textContent = msgMin;
+            errBox.classList.remove('d-none');
+            return false;
+        }
+        if (newPwd !== confPwd) {
+            errBox.textContent = msgMismatch;
+            errBox.classList.remove('d-none');
+            return false;
+        }
+        errBox.classList.add('d-none');
+        return true;
+    }
+</script>
+
 <?= $this->endSection() ?>

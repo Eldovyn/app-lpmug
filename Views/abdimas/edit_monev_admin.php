@@ -601,6 +601,24 @@ if (! function_exists('lang_url')) {
                                             <?php endif; ?>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td colspan="6" style="border: 1px solid; width:150px;">
+                                            <label class="font-weight-bold mt-1">Upload File SKM:</label><br>
+                                            <?php if ($abdimas->skm == null) : ?>
+                                                <input type="file" name="skm" id="skm" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.png">
+                                                <small class="text-muted">Format yang diperbolehkan: PDF, DOC, DOCX, JPG, PNG</small>
+                                            <?php else : ?>
+                                                <p>
+                                                    <a href="<?= base_url('uploads/skm/' . $abdimas->file_skm); ?>" target="_blank" class="text-primary">
+                                                        <?= $abdimas->skm; ?>
+                                                    </a>
+                                                </p>
+                                                <input type="file" name="skm" id="skm" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.png">
+                                                <small class="text-muted">Kosongkan jika tidak ingin mengganti file</small>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+
                                 </tbody>
                             </table>
                             <!-- ===================== TABEL RATA-RATA ===================== -->

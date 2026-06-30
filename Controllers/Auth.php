@@ -16,28 +16,12 @@ class Auth extends BaseController
         if (session('user_id') == true) {
             return redirect()->to(site_url('dashboard'));
         }
-
-        $num1 = rand(1, 9);
-        $num2 = rand(1, 9);
-        $data['captcha_num1'] = $num1;
-        $data['captcha_num2'] = $num2;
-        session()->set('captcha_answer', $num1 + $num2);
-
         return view('auth/login', $data);
     }
 
     public function loginProcess()
     {
         $post = $this->request->getPost();
-
-        // Validasi Captcha
-        $captchaInput = $post['captcha'] ?? '';
-        $captchaAnswer = session()->get('captcha_answer');
-
-        if ($captchaInput === '' || (int)$captchaInput !== (int)$captchaAnswer) {
-            return redirect()->back()->with('error', '<br>Maaf, jawaban keamanan (Captcha) salah.');
-        }
-
         $query = $this->db->table('tbl_users')->getWhere(['nidn' => $post['nidn']]);
         $user = $query->getRow();
 
@@ -67,12 +51,6 @@ class Auth extends BaseController
             return redirect()->to(site_url('dashboard'));
         }
 
-        $num1 = rand(1, 9);
-        $num2 = rand(1, 9);
-        $data['captcha_num1'] = $num1;
-        $data['captcha_num2'] = $num2;
-        session()->set('captcha_answer', $num1 + $num2);
-
         // Load models for dropdowns
         $jurusanModel = new \App\Models\JurusanModel();
         $kotaModel = new \App\Models\KotaModel();
@@ -90,13 +68,6 @@ class Auth extends BaseController
         $builder = $db->table('tbl_users');
 
         $data['title_tab'] = 'Registrasi &mdash; LPM UG';
-
-        $captchaInput = $this->request->getPost('captcha') ?? '';
-        $captchaAnswer = session()->get('captcha_answer');
-
-        if ($captchaInput === '' || (int)$captchaInput !== (int)$captchaAnswer) {
-            return redirect()->back()->withInput()->with('error', 'Maaf, jawaban keamanan (Captcha) salah.');
-        }
 
         $rules = [
             'user_name' => [

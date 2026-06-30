@@ -16,7 +16,7 @@ class App extends BaseConfig
      *
      *    http://example.com/
      */
-    public string $baseURL = 'https://lpm.gunadarma.ac.id/';
+    public string $baseURL = '';
 
 
     /**

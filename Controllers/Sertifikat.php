@@ -115,63 +115,132 @@ class Sertifikat extends BaseController
             $pdf->SetXY(0, 80);
             $pdf->Cell(297, 12, strtoupper($namaUser), 0, 1, 'C');
 
-            // ── Area tanda tangan — sama persis pola Abdimas::generatePdf() ──
-            // Template background (landscape A4 297×210mm) meletakkan kotak:
-            //   LPM   : X=20,  lebar=135 → X=20  s/d X=155
-            //   Peserta: X=162, lebar=135 → X=162 s/d X=297
-            $pdf->SetFont('helvetica', '', 9);
+            // ── Keterangan Peran dan Judul Kegiatan ───────────────────────────
+            $peran = ($laporan['ketua_id'] == $user->user_id) ? 'Ketua Pengusul' : 'Anggota Pengusul';
+            
+            // Keterangan Judul Kegiatan (karena PESERTA sudah ada di template)
+            $pdf->SetFont('times', '', 14); // Font Serif seperti di gambar
             $pdf->SetTextColor(0, 0, 0);
+            
+            $judul = $laporan['judul_kegiatan'] ?? '-';
+            $teksKegiatan = 'Dalam mengikuti kegiatan Pengabdian Kepada Masyarakat (PKM) ' . $periode_display . ' "' . $judul . '"';
+            
+            // Posisi X diatur ke 20 agar tidak terlalu mepet tepi kertas (margin)
+            $pdf->SetXY(20, 115);
+            // MultiCell untuk mem-wrap teks menjadi satu paragraf yang rapi
+            $pdf->MultiCell(257, 8, $teksKegiatan, 0, 'C', false);
 
-            $y_pos  = 157;   // Y awal kotak tanda tangan di template
-            $qrSize = 25;    // sesuai placeholder 25×25 mm di background
+            $yDate = $pdf->GetY() + 8; // Beri sedikit jarak setelah paragraf teks
+
+            // Tanggal Pelaksanaan di tengah (sebelum tanda tangan) - Format Range
+            $bulanIndo = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+            
+            $rawDate = $laporan['tanggal_kegiatan'] ?? '';
+            
+            // Sistem menyimpan format daterange menggunakan pemisah ' - '
+            if (strpos($rawDate, ' - ') !== false) {
+                $parts = explode(' - ', $rawDate);
+                $rawStart = trim($parts[0] ?? '');
+                $rawEnd   = trim($parts[1] ?? '');
+            } else {
+                $rawStart = trim($rawDate);
+                $rawEnd   = trim($laporan['tanggal_selesai'] ?? '');
+            }
+
+            if (empty($rawStart) || strpos($rawStart, '0000') !== false || strtotime($rawStart) <= 0) {
+                $rawStart = date('Y-m-d');
+            }
+
+            $startTs = strtotime($rawStart);
+            $tglStart = date('d', $startTs);
+            $blnStart = $bulanIndo[(int)date('m', $startTs)];
+            $thnStart = date('Y', $startTs);
+
+            $strTanggal = "$tglStart $blnStart $thnStart";
+
+            // Cek apakah ada tanggal selesai yang valid dan berbeda dengan tanggal mulai
+            if (!empty($rawEnd) && strpos($rawEnd, '0000') === false && strtotime($rawEnd) > 0 && $rawEnd !== $rawStart) {
+                $endTs = strtotime($rawEnd);
+                if ($endTs > $startTs) {
+                    $tglEnd = date('d', $endTs);
+                    $blnEnd = $bulanIndo[(int)date('m', $endTs)];
+                    $thnEnd = date('Y', $endTs);
+
+                    if ($thnStart !== $thnEnd) {
+                        $strTanggal = "$tglStart $blnStart $thnStart — $tglEnd $blnEnd $thnEnd";
+                    } elseif ($blnStart !== $blnEnd) {
+                        $strTanggal = "$tglStart $blnStart — $tglEnd $blnEnd $thnStart";
+                    } else {
+                        $strTanggal = "$tglStart — $tglEnd $blnEnd $thnStart";
+                    }
+                }
+            }
+
+            $lokasiTanggal = "Depok, $strTanggal";
+
+            $pdf->SetFont('helvetica', 'B', 12); // Tanggal Bold seperti gambar
+            $pdf->SetTextColor(49, 39, 102); // Warna Ungu/Biru Gelap
+            $pdf->SetXY(0, $yDate);
+            $pdf->Cell(297, 6, $lokasiTanggal, 0, 1, 'C');
+
+            // ── Area tanda tangan ──
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(0, 0, 0); // Kembalikan ke hitam untuk tanda tangan
+
+            $y_pos  = $yDate + 12; // Start of signatures dinamis berdasarkan letak tanggal
+            $qrSize = 22; // Kurangi sedikit ukurannya agar tidak terlalu mepet bawah
 
             // Kolom kiri — LPM
-            $colLX = 20;
-            $colLW = 135;
+            $colLX = 30;
+            $colLW = 110;
             // Kolom kanan — Peserta
-            $colRX = 162;
-            $colRW = 115;
+            $colRX = 157;
+            $colRW = 110;
 
-            $qr_lpm_content = "Dr. Aris Budi Setyawan, SE., MM., M.Si\nNIDN: 0326057004";
+            $qr_lpm_content = "Dr. Aris Budi Setyawan, SE., MM., M.Si\nNIDN: 0326057004\nPeriode: " . $periode_display;
 
             // === Kolom Kiri : LPM ===
-            // Keterangan di atas QR
-            $pdf->SetXY($colLX, $y_pos + -18);
-            $pdf->MultiCell($colLW, 5,
+            $pdf->SetXY($colLX, $y_pos);
+            $pdf->MultiCell($colLW, 4,
                 "Mengetahui,\nKetua Lembaga Pengabdian kepada Masyarakat\nUniversitas Gunadarma",
                 0, 'C', false);
 
-            // QR — di tengah kolom (sama dengan pola Abdimas)
-            $xQrL = $colLX + ($colLW - $qrSize) / 2;   // = 75
-            $yQr  = $y_pos + -5;                         // = 177
+            $xQrL = $colLX + ($colLW - $qrSize) / 2;
+            $yQr  = $y_pos + 12;
             $pdf->SetXY($xQrL, $yQr);
             $pdf->write2DBarcode($qr_lpm_content, 'QRCODE,L',
                 $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
 
-            // Nama / NIDN di bawah QR
-            $pdf->SetXY($colLX, $yQr + $qrSize + 2);
-            $pdf->MultiCell($colLW, 5,
+            // Garis Tanda Tangan Kiri (70mm di tengah kolom 110mm)
+            $lineStartL = $colLX + 20;
+            $lineEndL = $colLX + 90;
+            $pdf->Line($lineStartL, $yQr + $qrSize + 2, $lineEndL, $yQr + $qrSize + 2);
+
+            $pdf->SetXY($colLX, $yQr + $qrSize + 4);
+            $pdf->MultiCell($colLW, 4,
                 "(Dr. Aris Budi Setyawan, SE., MM., M.Si)\nNIDN/NIP: 0326057004 / 930391",
                 0, 'C', false);
 
             // === Kolom Kanan : Peserta ===
-            // Keterangan di atas QR
-            $pdf->SetXY($colRX, $y_pos + -12);
-            $pdf->MultiCell($colRW, 5, "Ketua Pengusul,", 0, 'C', false);
+            $pdf->SetXY($colRX, $y_pos + 8); // Sejajarkan dengan bagian bawah teks LPM
+            $pdf->MultiCell($colRW, 4, $peran . ",", 0, 'C', false);
 
-            // QR — di tengah kolom (isi sama persis pola Abdimas::generatePdf)
             $qr_peserta_content = $namaUser .
                 "\nNIDN: " . $nidn .
                 "\nPeriode: " . $periode_display;
 
-            $xQrR = $colRX + ($colRW - $qrSize) / 2;   // = 217
+            $xQrR = $colRX + ($colRW - $qrSize) / 2;
             $pdf->SetXY($xQrR, $yQr);
             $pdf->write2DBarcode($qr_peserta_content, 'QRCODE,L',
                 $pdf->GetX(), $pdf->GetY(), $qrSize, $qrSize, [], 'N');
 
-            // Nama + NIDN di bawah QR
-            $pdf->SetXY($colRX, $yQr + $qrSize + 2);
-            $pdf->MultiCell($colRW, 5,
+            // Garis Tanda Tangan Kanan (70mm di tengah kolom 110mm)
+            $lineStartR = $colRX + 20;
+            $lineEndR = $colRX + 90;
+            $pdf->Line($lineStartR, $yQr + $qrSize + 2, $lineEndR, $yQr + $qrSize + 2);
+
+            $pdf->SetXY($colRX, $yQr + $qrSize + 4);
+            $pdf->MultiCell($colRW, 4,
                 "(" . strtoupper($namaUser) . ")\nNIDN: " . $nidn,
                 0, 'C', false);
 

@@ -311,13 +311,6 @@ $t = $dict[$lang] ?? $dict['id'];
         background: rgba(102, 126, 234, 0.05);
     }
 
-    .faq-btn:focus,
-    .faq-btn:active {
-        outline: none !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-
     .faq-icon {
         display: inline-flex;
         align-items: center;

@@ -37,7 +37,7 @@
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="<?=base_url()?>/homepage/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.7.2/css/all.min.css">
 
 
     <!-- Template Stylesheet -->

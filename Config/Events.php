@@ -24,14 +24,6 @@ use CodeIgniter\HotReloader\HotReloader;
  */
 
 Events::on('pre_system', static function () {
-    // Sinkronisasi bahasa secara global untuk semua page
-    if (isset($_GET['lang'])) {
-        $lang = strtolower(trim($_GET['lang']));
-        if (in_array($lang, ['id', 'en'], true)) {
-            $_COOKIE['lang'] = $lang; // Untuk dibaca oleh controller pada request saat ini
-            \Config\Services::response()->setCookie('lang', $lang, 60 * 60 * 24 * 30); // Simpan di browser
-        }
-    }
     if (ENVIRONMENT !== 'testing') {
         if (ini_get('zlib.output_compression')) {
             throw FrameworkException::forEnabledZlibOutputCompression();

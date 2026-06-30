@@ -27,9 +27,9 @@ class Database extends Config
     public array $default = [
         'DSN'          => '',
         'hostname'     => 'localhost',
-        'username'     => 'lpmgunadarmaac',
-        'password'     => 'MargondaRaya2026!!',
-        'database'     => 'lpmgunadarmaac_uglpm',
+        'username'     => 'root',
+        'password'     => 'root123',
+        'database'     => 'lpmug_uglpm',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,

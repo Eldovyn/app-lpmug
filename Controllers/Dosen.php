@@ -107,21 +107,10 @@ class Dosen extends ResourceController
         $baseTitle = 'Tambah Dosen'; // kalau mau ID lebih "indo": 'Profil Staff'
         $title = $baseTitle;
 
-        helper('cookie');
-        $allowed = ['id', 'en'];
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = $this->request->getCookie('lang');
-        }
-        $lang = strtolower(trim((string) ($lang ?? 'id')));
-        if (! in_array($lang, $allowed, true)) {
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
             $lang = 'id';
         }
-        $reqLang = $this->request->getGet('lang');
-        if ($reqLang && in_array($reqLang, $allowed, true)) {
-            set_cookie('lang', $reqLang, 60 * 60 * 24 * 30);
-        }
-
         // ===== Translate jika EN =====
         if ($lang === 'en') {
             $title = service('translation')->translateCached($baseTitle, 'id', 'en'); // V2 translate :contentReference[oaicite:0]{index=0}
@@ -134,7 +123,6 @@ class Dosen extends ResourceController
         $data['fungsional'] = $this->fungsional->findAll();
         $data['jurusan'] = $this->jurusan->getAll();
         $data['pesan'] = $this->pesan->getPesan();
-        $data['lang'] = $lang;
 
         return view('dosen/new', $data);
     }
@@ -201,21 +189,10 @@ class Dosen extends ResourceController
         $baseTitle = 'Edit Dosen'; // kalau mau ID lebih "indo": 'Profil Staff'
         $title = $baseTitle;
 
-        helper('cookie');
-        $allowed = ['id', 'en'];
-        $lang = $this->request->getGet('lang');
-        if (! $lang) {
-            $lang = $this->request->getCookie('lang');
-        }
-        $lang = strtolower(trim((string) ($lang ?? 'id')));
-        if (! in_array($lang, $allowed, true)) {
+        $lang = $this->request->getCookie('lang') ?? 'id';
+        if (! in_array($lang, ['id', 'en'], true)) {
             $lang = 'id';
         }
-        $reqLang = $this->request->getGet('lang');
-        if ($reqLang && in_array($reqLang, $allowed, true)) {
-            set_cookie('lang', $reqLang, 60 * 60 * 24 * 30);
-        }
-
         // ===== Translate jika EN =====
         if ($lang === 'en') {
             $title = service('translation')->translateCached($baseTitle, 'id', 'en'); // V2 translate :contentReference[oaicite:0]{index=0}
@@ -223,7 +200,6 @@ class Dosen extends ResourceController
         $data['title'] = $title;
         $data['title_tab'] = $title . ' &mdash; LPM UG';
         $data['pesan'] = $this->pesan->getPesan();
-        $data['lang'] = $lang;
 
         $dosen =  $this->dosen->find($id);
         if (is_object($dosen)) {
@@ -251,32 +227,15 @@ class Dosen extends ResourceController
             'user_name'     => $this->request->getVar('user_name'),
             'gelar_blkng'   => $this->request->getVar('gelar_blkng'),
             'sinta_id'      => $this->request->getVar('sinta_id'),
-            'nidn'          => $this->request->getVar('nidn'),
             'email'         => $this->request->getVar('email'),
             'kontak'        => $this->request->getVar('kontak'),
             'jurusan_id'    => $this->request->getVar('jurusan_id'),
             'fungsional_id' => $this->request->getVar('fungsional_id'),
+            // 'password'      => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
         ];
-
-        // Filter out null values so omitted/disabled fields don't fail validation
-        $data = array_filter($data, function($value) {
-            return $value !== null;
-        });
-
-        $password = $this->request->getVar('password');
-        $password_confirm = $this->request->getVar('password_confirm');
-        
         $lang = $this->request->getCookie('lang') ?? 'id';
         if (! in_array($lang, ['id', 'en'], true)) {
             $lang = 'id';
-        }
-
-        if ((string)$password !== '' || (string)$password_confirm !== '') {
-            if ($password !== $password_confirm) {
-                $errorMsg = $lang === 'en' ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.';
-                return redirect()->back()->withInput()->with('error_password_confirm', $errorMsg);
-            }
-            $data['password'] = password_hash($password, PASSWORD_BCRYPT);
         }
 
         $messageBerhasil = 'Data berhasil disimpan';
@@ -286,13 +245,7 @@ class Dosen extends ResourceController
             $messageBerhasil = service('translation')->translateCached($messageBerhasil, 'id', 'en');
         }
 
-        $data['user_id'] = $id; // Agar rule is_unique mengabaikan user_id ini
-        if (!$this->dosen->update($id, $data)) {
-            // Debugging: tampilkan error secara langsung
-            dd($this->dosen->errors());
-            // return redirect()->back()->withInput()->with('validation', $this->dosen->validation);
-        }
-
+        $this->dosen->update($id, $data);
         return redirect()->to(site_url('dosen'))->with('success', $messageBerhasil);
     }
 

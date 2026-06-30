@@ -245,6 +245,25 @@ $t = function (string $key, ...$args) use ($I18N, $lang) {
                                                 </div>
                                             </div>
 
+                                            <div class="row mt-2">
+                                                <div class="col-md-12">
+                                                    <div class="card p-2">
+                                                        <b>Mahasiswa Terlibat: </b>
+                                                        <?php
+                                                        $mhs_list = [];
+                                                        if (isset($mahasiswa) && (is_array($mahasiswa) || is_object($mahasiswa))) {
+                                                            foreach ($mahasiswa as $mhs) {
+                                                                if ($v_abdimas->laporan_id == $mhs->laporan_id) {
+                                                                    $mhs_list[] = esc(ucwords(strtolower($mhs->mahasiswa_name))) . ' (' . esc($mhs->mahasiswa_npm) . ')';
+                                                                }
+                                                            }
+                                                        }
+                                                        echo !empty($mhs_list) ? implode(', ', $mhs_list) : '<span class="text-danger">Tidak ada mahasiswa</span>';
+                                                        ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="card p-2">
                                                 <b><?= $t('members'); ?> </b>
                                                 <?php
@@ -314,9 +333,93 @@ $t = function (string $key, ...$args) use ($I18N, $lang) {
                                                     </a>
                                                 <?php endif; ?>
                                             </div>
+<<<<<<< HEAD
                                         </td>
                                     </tr>
                                 <?php endif; ?>
+=======
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="card p-2">
+                                                <b>Catatan Perbaikan: </b>
+                                                <?php if($v_abdimas->revisi == !null) :?>
+                                                    <?= $v_abdimas->revisi; ?>
+                                                <?php else :?>
+                                                    <span class="text-danger">Tidak ada catatan revisi</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card p-2">
+                                        <b>Anggota : </b>
+                                        <?php 
+                                        $seen = []; 
+                                        $counter = 1; 
+                                        $output = []; // Array untuk menyimpan hasil
+                                        
+                                        foreach ($tags as $key => $v_tags): 
+                                            if ($v_abdimas->laporan_id == $v_tags->laporan_id && !isset($seen[$v_tags->laporan_id])): 
+                                                if ($v_tags->anggota_id == $v_abdimas->ketua_id): 
+                                                    $output[] = "<div class='item'>{$counter}. " . ucwords(strtolower($v_tags->user_name)) . 
+                                                                " (<span class='text-danger'>Ketua</span>)<br> 
+                                                                <b>NIDN:</b> {$v_tags->nidn} <br> 
+                                                                <b>SINTA ID:</b> {$v_tags->sinta_id}</div>";
+                                                else: 
+                                                    $output[] = "<div class='item'>{$counter}. " . ucwords(strtolower($v_tags->user_name)) . 
+                                                                "<br> <b>NIDN:</b> {$v_tags->nidn} <br> 
+                                                                <b>SINTA ID:</b> {$v_tags->sinta_id}</div>";
+                                                endif;
+                                                
+                                                $seen[$v_mitra->user_id] = true; 
+                                                $counter++;
+                                            endif; 
+                                        endforeach;
+                                        ?>
+                                        
+                                        <!-- Tampilan dengan Flexbox -->
+                                        <style>
+                                            .container {
+                                                display: flex;
+                                                flex-wrap: wrap;
+                                                gap: 20px;
+                                            }
+                                            .item {
+                                                width: calc(25% - 20px); /* Membagi jadi 2 kolom */
+                                                background: #f8f9fa;
+                                                padding: 10px;
+                                                border: 1px solid #ddd;
+                                                border-radius: 5px;
+                                            }
+                                        </style>
+                                        
+                                        <div class="container">
+                                            <?= implode("\n", $output); ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <br>
+                                    
+                                </td>
+                                <td class="text-center">
+                                    <!-- <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#exampleModal"><i class="fas fa-eye"></i></a> -->
+                                    <!--<a href="<?= site_url('abdimas/' . $v_abdimas->laporan_id); ?>"-->
+                                    <!--    class="btn btn-dark btn-sm m-1 show-item" style="width:150px;">Lihat-->
+                                    <!--    Proposal</a><br>-->
+                                    <a href="<?= site_url('pelaksanaan/' . $v_abdimas->laporan_id) . '/edit'; ?>"
+                                        class="btn btn-primary btn-sm" style="width:150px;">Edit Pelaksanaan</a>
+                                    <a href="<?= site_url('abdimas/surat-balasan-pdf/' . $v_abdimas->laporan_id); ?>"
+                                        class="btn btn-success btn-sm mt-1" style="width:150px;" target="_blank">Surat Balasan</a>
+                                    <!--<a href="<?= site_url('abdimas/formSuratBalasan'); ?>" -->
+                                    <!--   class="btn btn-success btn-lg">-->
+                                    <!--   <i class="fas fa-envelope-open-text"></i> Form Surat Balasan-->
+                                    <!--</a>-->
+
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+>>>>>>> 55c0835 (refactor: update code)
                             <?php endforeach; ?>
 
                             <?php if (!$hasData): ?>

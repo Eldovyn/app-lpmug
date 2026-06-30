@@ -620,11 +620,7 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
     }
 
     renderChart(selEl?.value || '');
-    document.addEventListener("DOMContentLoaded", function() {
-      if (selEl) {
-        selEl.addEventListener('change', () => renderChart(selEl.value));
-      }
-    });
+    selEl?.addEventListener('change', () => renderChart(selEl.value));
   })();
 
   // ===== CHART 4: LUARAN BAR =====
@@ -701,11 +697,7 @@ $i18n = ['dosen'=>$t['dosen'],'mitra'=>$t['mitra'],'jumlah_pengguna'=>$t['jumlah
     }
 
     renderChart(selEl?.value || '');
-    document.addEventListener("DOMContentLoaded", function() {
-      if (selEl) {
-        selEl.addEventListener('change', () => renderChart(selEl.value));
-      }
-    });
+    selEl?.addEventListener('change', () => renderChart(selEl.value));
 
     // Download button
     document.getElementById('dl-luaran')?.addEventListener('click', (e) => {

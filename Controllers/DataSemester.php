@@ -91,9 +91,6 @@ class DataSemester extends BaseController
         // Load laporan data berdasarkan periode
         $abdimasModel = new \App\Models\AbdimasModel();
 
-        // OPTIMASI: Hanya mengambil kolom nilai (nt1-nt9) untuk meringankan query database
-        $abdimasModel->select('nt1, nt2, nt3, nt4, nt5, nt6, nt7, nt8, nt9');
-
         if (!empty($selected_semester)) {
             // Ambil data berdasarkan periode_id yang dipilih
             $laporan_data = $abdimasModel->where('periode_id', $selected_semester)->findAll();
