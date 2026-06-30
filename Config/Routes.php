@@ -88,7 +88,6 @@ $routes->resource('dosen');
 $routes->resource('listdosen');
 
 // Router List mitra
-<<<<<<< HEAD
 // Form upload dokumen (SPM & SKM)
 $routes->get('mitra/upload/(:num)', 'Mitra::uploadForm/$1');
 
@@ -139,13 +138,7 @@ $routes->get('mahasiswa/check-group-limit/(:num)', 'Mahasiswa::checkGroupLimit/$
 // Update password mitra dari halaman list
 $routes->post('mitra/update-password/(:num)', 'Mitra::updatePassword/$1');
 
-<<<<<<< HEAD
-=======
-=======
-$routes->get('mitra/upload_spm/(:num)', 'Mitra::uploadSPMForm/$1');
-$routes->post('mitra/upload_spm/(:num)', 'Mitra::uploadSPMSubmit/$1');
->>>>>>> 55c0835 (refactor: update code)
->>>>>>> 8f61413156a4d90b7797e0e124740d7d842e6332
+
 $routes->resource('mitra');
 
 // Untuk User Dosen
@@ -197,7 +190,6 @@ $routes->resource('luaran');
 $routes->get('abdimas/pdf/(:num)', 'Abdimas::generatePdf/$1');
 $routes->get('abdimas/arsip/(:num)', 'Abdimas::arsip/$1');
 $routes->get('abdimas/formSuratBalasan', 'Abdimas::formSuratBalasan');
-<<<<<<< HEAD
 
 // === SURAT BALASAN PDF ROUTE (MODIFIED - now supports multi-role) ===
 $routes->get('abdimas/surat-balasan-pdf/(:num)', 'Abdimas::suratBalasanPdf/$1');
@@ -206,10 +198,6 @@ $routes->post('abdimas/generate-surat-balasan-pdf-from-form', 'Abdimas::generate
 $routes->get('abdimas/berkas/(:segment)/(:segment)', 'Abdimas::berkas/$1/$2');
 $routes->get('abdimas/download/(:segment)/(:segment)', 'Abdimas::download/$1/$2');
 $routes->get('abdimas/lihatDokumen/(:segment)/(:num)/(:num)', 'Abdimas::lihatDokumen/$1/$2/$3');
-=======
-$routes->get('abdimas/surat-balasan-pdf/(:num)', 'Abdimas::suratBalasanPdf/$1');
-$routes->post('abdimas/generate-surat-balasan-pdf-from-form', 'Abdimas::generateSuratBalasanPdfFromForm');
->>>>>>> 55c0835 (refactor: update code)
 $routes->get('pelaksanaan', 'Pelaksanaan::index');
 
 // Routes untuk upload dan update surat undangan di PelaksanaanController

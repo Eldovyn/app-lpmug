@@ -395,7 +395,6 @@
                                     <tr>
                                         <td colspan="6" style="border: 1px solid; width:150px;">
                                             <label class="font-weight-bold">Saran & Masukan:</label><br>
-<<<<<<< HEAD
                                             <?php if ($rekapan->saran_masukan == null) : ?>
                                                 <span class="text-danger">Belum ada Saran dan Masukan</span>
                                             <?php else : ?>
@@ -421,33 +420,6 @@
                                     <!--        <?php endif; ?>-->
                                     <!--    </td>-->
                                     <!--</tr>-->
-=======
-                                             <?php if ($rekapan->saran_masukan == null) : ?>
-                                             <span class="text-danger">Belum ada Saran dan Masukan</span>
-                                             <?php else : ?>
-                                             <p class="text-break"><?= $rekapan->saran_masukan; ?></p>
-                                             <textarea name="saran_masukan" id="saran_masukan" class="form-control" hidden readonly><?= $rekapan->saran_masukan; ?></textarea>
-                                             <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="6" style="border: 1px solid; width:150px;">
-                                            <label class="font-weight-bold mt-1">Upload File SKM:</label><br>
-                                            <?php if ($abdimas->skm == null) : ?>
-                                                <input type="file" name="skm" id="skm" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.png">
-                                                <small class="text-muted">Format yang diperbolehkan: PDF, DOC, DOCX, JPG, PNG</small>
-                                            <?php else : ?>
-                                                <p>
-                                                    <a href="<?= base_url('berkas/skm/' . $abdimas->skm); ?>" target="_blank" class="text-primary">
-                                                        <?= $abdimas->skm; ?>
-                                                    </a>
-                                                </p>
-                                                <input type="file" name="skm" id="skm" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.png">
-                                                <small class="text-muted">Kosongkan jika tidak ingin mengganti file</small>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
->>>>>>> 55c0835 (refactor: update code)
 
                                 </tbody>
                             </table>

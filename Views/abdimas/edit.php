@@ -214,7 +214,6 @@ $t = [
                                     <input type="text" name="sinta_id" id="sinta_id" value="<?= userLogin()->sinta_id; ?>" class="form-control" disabled autofocus>
                                 </div>
                             </div>
-<<<<<<< HEAD
 
                             <div class="form-group">
                                 <label><?= $t[$lang]['pilih_mitra']; ?><span class="text-danger"><?= $t[$lang]['required']; ?></span> <span class="text-primary"><?= $t[$lang]['note_mitra']; ?> <a href="<?= site_url('mitra/new'); ?>" class="badge badge-primary">"<?= $t[$lang]['daftarkan_mitra']; ?>"</a></span></label>
@@ -439,61 +438,6 @@ $t = [
                             </div>
                         </form>
                     </div>
-=======
-                        </div>
-                        <div class="form-group">
-                            <label>Upload Bukti Kegiatan</label><span class="text-danger">*</span> <span class="text-primary"><b>Note:</b> Max File Size: 5 MB</span> | <span>Jika file anda melebih Max Size silahkan di kompres terlebih dahulu. bisa menggunakan: <a class="badge badge-primary mb-1"  target="_blank" href="https://www.ilovepdf.com/compress_pdf">Compress PDF Online</a></span>
-                            <input type="file" name="bukti_kegiatan" id="bukti_kegiatan" class="form-control <?= (session('validation')) ? 'is-invalid' : ''; ?>" autofocus>
-                            <div class="invalid-feedback">
-                                <?php if(session('validation') && session('validation')->hasError('bukti_kegiatan')):?>
-                                    <?= session('validation')->getError('bukti_kegiatan'); ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Upload SPM</label><span class="text-danger">*</span> 
-                            <span class="text-primary"><b>Note:</b> Max File Size: 5 MB</span> | 
-                            <span>Jika file anda melebih Max Size silahkan di kompres terlebih dahulu. bisa menggunakan: 
-                                <a class="badge badge-primary mb-1" target="_blank" href="https://www.ilovepdf.com/compress_pdf">Compress PDF Online</a>
-                            </span>
-                            <input type="file" name="spm" id="spm" 
-                                   class="form-control <?= (session('validation')) ? 'is-invalid' : ''; ?>" autofocus>
-                            <div class="invalid-feedback">
-                                <?php if(session('validation') && session('validation')->hasError('spm')):?>
-                                    <?= session('validation')->getError('spm'); ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Link Luaran <span class="text-primary"><b>Contoh:</b> http://link.com atau https://link.com</span></label>
-                            <input type="text" name="link_luaran" value="<?= $abdimas->link_luaran; ?>" id="link_luaran" class="form-control" placeholder="Masukan Link Luaran" autofocus>
-                        </div>
-                        <div class="float-left">
-                            <?php if($abdimas->laporan != NULL): ?>
-                                <a href="<?= site_url('berkas/laporan/'.$abdimas->laporan); ?>" class="btn btn-info text-dark" target="_blank">Lihat Laporan</a>
-                            <?php else: ?>
-                                <span class="btn btn-dark">Silahkan upload laporan</span>
-                            <?php endif;?>
-                            <?php if($abdimas->bukti_kegiatan != NULL): ?>
-                                <a href="<?= site_url('berkas/kegiatan/'.$abdimas->bukti_kegiatan); ?>" class="btn btn-info text-dark" target="_blank">Lihat Bukti Kegiatan</a>
-                            <?php else: ?>
-                                <span class="btn btn-dark">Silahkan upload bukti kegiatan</span>
-                            <?php endif;?>
-                            <?php if($abdimas->spm != NULL): ?>
-                                <a href="<?= site_url('berkas/spm/'.$abdimas->spm); ?>" class="btn btn-info text-dark" target="_blank">Lihat SPM</a>
-                            <?php else: ?>
-                                <span class="btn btn-dark">Silahkan upload SPM</span>
-                            <?php endif;?>
-                        </div>
-                        </div>
-                        <div class="float-right">
-                            <a href="<?= site_url('abdimas'); ?>" class="btn btn-dark">kembali</a>
-                            <!-- <button type="reset" class="btn btn-danger">Reset</button> -->
-                            <button type="submit" class="btn btn-primary">Simpan</button>
-                        </div>
-                    </form>
->>>>>>> 55c0835 (refactor: update code)
                 </div>
             </div>
         </div>

@@ -233,7 +233,6 @@ $t = function (string $key) use ($tr, $lang) {
                                                 is_null($v_abdimas->nlpm8) &&
                                                 is_null($v_abdimas->nlpm9);
 
-<<<<<<< HEAD
                                             $isMonevTeam =
                                                 !is_null($v_abdimas->nt1) &&
                                                 !is_null($v_abdimas->nt2) &&
@@ -466,58 +465,6 @@ $t = function (string $key) use ($tr, $lang) {
                                             </div>
                                         </td>
                                     </tr>
-=======
-                                    <b>Alamat:</b>
-                                    <?php
-                                    $seen = [];
-                                    foreach ($mitra as $alt_mitra) :
-                                        if ($alt_mitra->user_id == $v_abdimas->mitra_id && !isset($seen[$alt_mitra->user_id])) :
-                                            echo esc($alt_mitra->alamat);
-                                            $seen[$alt_mitra->user_id] = true;
-                                        endif;
-                                    endforeach; ?><br><br>
-                                    
-                                    <b>Dana Pengabdian:</b>
-                                    <?= 'Rp. ' . number_format((int) $v_abdimas->range_dana, 0, ',', '.'); ?>
-                                </td>
-                                <td class="text-wrap">
-                                    <?php foreach ($periode as $v_periode) :
-                                        if ($v_periode->periode_id == $v_abdimas->periode_id) :
-                                            echo esc($v_periode->periode_name) . ' ' . esc($v_periode->tahun_ajaran);
-                                        endif;
-                                    endforeach; ?>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge <?= $v_abdimas->verifikasi == 1 ? 'badge-success' : ($v_abdimas->verifikasi == 2 ? 'badge-warning text-dark' : 'badge-primary') ?>">
-                                        <?= $v_abdimas->verifikasi == 1 ? 'DISETUJUI' : ($v_abdimas->verifikasi == 2 ? 'REVISI' : 'PROSES') ?>
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <a href="<?= site_url('rekapan/' . $v_abdimas->laporan_id . '/edit'); ?>" 
-                                           class="btn btn-dark btn-sm p-1 mb-1" style="width:150px; text-align:center;">
-                                           Lihat
-                                        </a>
-                                
-                                        <?php if (in_array(userLogin()->role_id, [1, 2])) : ?>
-                                            <form action="<?= site_url('abdimas/' . $v_abdimas->laporan_id); ?>" method="POST" class="d-inline" id="del-<?= $v_abdimas->laporan_id; ?>">
-                                        <?= csrf_field(); ?>
-                                        <input type="hidden" name="_method" value="DELETE">
-                                        <button class="btn btn-danger btn-sm p-1 mb-1" style="width:150px"
-                                            data-confirm="Hapus data? | Apakah anda yakin?"
-                                            data-confirm-yes="submitDel(<?= $v_abdimas->laporan_id; ?>)">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                            <a href="<?= site_url('monevadmin/' . $v_abdimas->laporan_id . '/edit'); ?>" 
-                                               class="btn btn-primary btn-sm p-1 mx-auto" style="width:150px; text-align:center;">
-                                               Nilai MonEv
-                                            </a>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
->>>>>>> 55c0835 (refactor: update code)
                             <?php endif;
                             endforeach; ?>
                         </tbody>

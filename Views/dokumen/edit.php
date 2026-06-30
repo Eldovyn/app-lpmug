@@ -1,15 +1,5 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
 <html lang="en">
-=======
-<html lang="<?php
-            $request = service('request'); // :contentReference[oaicite:2]{index=2}
-            $lang = $request->getCookie('lang') ?? 'id'; // :contentReference[oaicite:3]{index=3}
-            $lang = strtolower(trim((string) $lang));
-            $lang = ($lang === 'en') ? 'en' : 'id';
-            echo $lang;
-            ?>">
->>>>>>> 52135088f67f93cecd154237dcb0be5656d81879
 
 <head>
     <meta charset="UTF-8">
@@ -48,7 +38,6 @@
 <body>
 
     <div class="container">
-<<<<<<< HEAD
         <h2 class="title">✏️ Edit Dokumen</h2>
 
         <form action="<?= base_url('dokumen/update/' . $dokumen['id']) ?>" method="post" enctype="multipart/form-data" class="form-card">
@@ -61,20 +50,6 @@
             <div class="btn-group">
                 <button type="submit" class="btn btn-primary">💾 Update</button>
                 <a href="<?= base_url('dokumen') ?>" class="btn btn-secondary">⬅ Kembali</a>
-=======
-        <h2 class="title"><?= esc($t('h2')) ?></h2>
-
-        <form action="<?= base_url('dokumen/update/' . $dokumen['id']) ?>" method="post" enctype="multipart/form-data" class="form-card">
-            <label for="nama_file"><?= esc($t('doc_name')) ?></label>
-            <input type="text" name="nama_file" id="nama_file" value="<?= esc($dokumen['nama_file']) ?>" required>
-
-            <label for="file_dokumen"><?= esc($t('replace_file')) ?></label>
-            <input type="file" name="file_dokumen" id="file_dokumen">
-
-            <div class="btn-group">
-                <button type="submit" class="btn btn-primary">💾 <?= esc($t('update')) ?></button>
-                <a href="<?= base_url('dokumen') ?>" class="btn btn-secondary">⬅ <?= esc($t('back')) ?></a>
->>>>>>> 52135088f67f93cecd154237dcb0be5656d81879
             </div>
         </form>
     </div>

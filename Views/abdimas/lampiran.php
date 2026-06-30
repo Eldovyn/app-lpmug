@@ -1,14 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
-<<<<<<< HEAD
 
-=======
->>>>>>> 55c0835 (refactor: update code)
 <head>
     <meta charset="UTF-8">
     <title>Lampiran</title>
     <style>
-<<<<<<< HEAD
         body {
             font-family: "Times New Roman", serif;
             font-size: 12pt;
@@ -59,20 +55,6 @@
 
 <body>
     <div style="page-break-before: always;"></div>
-=======
-        body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 1.5; }
-        .kop { text-align: center; margin-bottom: 20px; line-height: 1; }
-        .kop h2 { margin: 0; font-size: 14pt; font-weight: bold; }
-        .kop h3 { margin: 0; font-size: 12pt; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-        table, th, td { border: 1px solid black; padding: 6px; }
-        th { text-align: center; background: #f2f2f2; }
-        td { vertical-align: top; }
-    </style>
-</head>
-<body>
-    <div style="page-break-before: always;"></div> 
->>>>>>> 55c0835 (refactor: update code)
     <div style="text-align: left; margin-top:20px; font-size: 12pt;">
 
         <!-- KOP SURAT -->
@@ -82,11 +64,7 @@
             <p>Jl. Komjen (Pol) M. Jasin (Jl. Akses UI) Kelapa Dua, Depok Jawa Barat</p>
             <p>Kampus E Gedung 4 Lantai 1 Universitas Gunadarma Telp (021) 8727517</p>
         </div>
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 55c0835 (refactor: update code)
         <p>Lampiran</p>
         <p style="text-align:center; font-weight:bold; margin:15px 0 25px 0;">
             PENANGGUNG JAWAB TIM:<br>
@@ -95,11 +73,7 @@
             <?= esc($periode_display ?? '-') ?>
         </p>
 
-<<<<<<< HEAD
         <?php
-=======
-        <?php 
->>>>>>> 55c0835 (refactor: update code)
         // Grouping dosen by jurusan
         $grouped = [];
         $total_dosen = 0;
@@ -131,11 +105,7 @@
                         <td><strong><?= esc($jurusan) ?></strong></td>
                         <td>
                             <?php foreach ($namas as $idx => $nama): ?>
-<<<<<<< HEAD
                                 <?= ($idx + 1) . '. ' . esc($nama) ?><br>
-=======
-                                <?= ($idx+1) . '. ' . esc($nama) ?><br>
->>>>>>> 55c0835 (refactor: update code)
                             <?php endforeach ?>
                         </td>
                     </tr>
@@ -158,9 +128,5 @@
         <!--<?php endif; ?>-->
     </div>
 </body>
-<<<<<<< HEAD
 
 </html>
-=======
-</html>
->>>>>>> 55c0835 (refactor: update code)

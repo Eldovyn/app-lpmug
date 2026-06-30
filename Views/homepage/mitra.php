@@ -94,11 +94,7 @@ $t = fn(string $key): string => $tr[$lang][$key] ?? ($tr['id'][$key] ?? $key);
                                 </tbody>
                             </table>
                             <div class="float-start">
-<<<<<<< HEAD
                                 <i>Showing <?= 1 + (10 * ($page - 1)); ?> to <?= $no - 1; ?> of <?= countDataMitra(); ?> entries</i>
-=======
-                                <i><?= $t('showing'); ?> <?= 1 + (10 * ($page - 1)); ?> <?= $t('to'); ?> <?= $no - 1; ?> <?= $t('of'); ?> <?= countDataMitra(); ?> <?= $t('entries'); ?></i>
->>>>>>> 52135088f67f93cecd154237dcb0be5656d81879
                             </div>
                             <div class="float-end">
                                 <?= $pager->links('default', 'pagination'); ?>

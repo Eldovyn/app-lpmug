@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php
 helper(['cookie', 'url']);
 
@@ -195,55 +194,3 @@ $t = static function (string $key) use ($TR, $lang): string {
 </section>
 
 <?= $this->endSection() ?>
-=======
-<?= $this->extend('layouts/default') ?>
-<?= $this->section('content') ?>
-
-<section class="section">
-    <div class="section-header">
-        <h1>Upload SPM</h1>
-        <a href="<?= site_url('dashboard') ?>" class="btn btn-dark ml-2"><i class="fas fa-arrow-left"></i> Kembali</a>
-    </div>
-
-    <div class="section-body">
-
-        <?php if(session()->getFlashdata('success')): ?>
-            <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
-        <?php endif; ?>
-        <?php if(session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
-        <?php endif; ?>
-
-        <form action="<?= site_url('mitra/upload_spm/' . $mitra->user_id) ?>" method="POST" enctype="multipart/form-data">
-            <?= csrf_field() ?>
-
-            <div class="form-group">
-                <label>Upload SPM <span class="text-danger">*</span></label>
-                <span class="text-primary"><b>Note:</b> Max File Size: 5 MB</span> |
-                <span>Jika file Anda melebihi Max Size, silakan kompres terlebih dahulu:
-                    <a class="badge badge-primary mb-1" target="_blank" href="https://www.ilovepdf.com/compress_pdf">Compress PDF Online</a>
-                </span>
-                <input type="file" name="spm" class="form-control" accept=".pdf" required>
-            </div>
-
-            <?php if(!empty($mitra->spm ?? null)): ?>
-                <p>File SPM saat ini: 
-                    <a href="<?= base_url('writable/berkas/spm/' . $mitra->spm) ?>" target="_blank"><?= $mitra->spm ?></a>
-                </p>
-            <?php endif; ?>
-
-            <div class="d-flex mt-2">
-                <button type="submit" class="btn btn-success me-2">
-                    <i class="fas fa-upload"></i> Upload
-                </button>
-                <a href="<?= site_url('dashboard') ?>" class="btn btn-dark">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
-            </div>
-
-        </form>
-    </div>
-</section>
-
-<?= $this->endSection() ?>
->>>>>>> 55c0835 (refactor: update code)
